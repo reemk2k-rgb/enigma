@@ -118,14 +118,7 @@ class _EncryptPageNormalState extends State<EncryptPageNormal> {
               ),
             ),
 
-            const SizedBox(height: 20),
-            const Text(
-              'Unlimited Attempts 🎉',
-              style: TextStyle(
-                color: Color(0xFF66C8C8),
-                fontSize: 16,
-              ),
-            ),
+
             const SizedBox(height: 20),
 
             // Dropdown لاختيار نوع التشفير

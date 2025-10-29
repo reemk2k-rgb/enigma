@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:login1/main_layout_normal.dart';
+import 'package:login1/pages/new_user_profile_page.dart'; // ✅ Import new profile page
 
 class PasswordPage extends StatelessWidget {
   final String email;
 
   const PasswordPage({super.key, required this.email});
 
-  /// دالة بسيطة للتحقق إذا الإيميل جديد أو موجود
-  /// لاحقًا تقدر تربطها بقاعدة بيانات أو Firebase
   bool _isNewUser(String email) {
-    // مثال: أي إيميل ينتهي بـ "new.com" نعتبره مستخدم جديد
+    // Example rule: if email ends with "new.com" → new user
     return email.endsWith("new.com");
   }
 
   @override
   Widget build(BuildContext context) {
     final TextEditingController passwordController = TextEditingController();
+    final TextEditingController confirmPasswordController = TextEditingController();
     final bool newUser = _isNewUser(email);
 
     return Scaffold(
@@ -35,8 +35,8 @@ class PasswordPage extends StatelessWidget {
           children: [
             Text(
               newUser
-                  ? "Hi, New Friend! Set Your Password"
-                  : "Welcome back! Enter your Password",
+                  ? "Hi, New Friend 👋\nLet's set up your password!"
+                  : "Welcome Back 👋\nEnter your password",
               style: const TextStyle(
                 color: Color(0xFF66C8C8),
                 fontSize: 20,
@@ -45,6 +45,8 @@ class PasswordPage extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 30),
+
+            // Email field (read-only)
             TextField(
               enabled: false,
               controller: TextEditingController(text: email),
@@ -58,12 +60,14 @@ class PasswordPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
+
+            // Password field
             TextField(
               controller: passwordController,
               obscureText: true,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
-                hintText: "Password",
+                hintText: "Enter your password",
                 hintStyle: TextStyle(color: Color(0xFF66C8C8)),
                 filled: true,
                 fillColor: Colors.black26,
@@ -73,7 +77,29 @@ class PasswordPage extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+
+            // Confirm password only for new users
+            if (newUser) ...[
+              const SizedBox(height: 20),
+              TextField(
+                controller: confirmPasswordController,
+                obscureText: true,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  hintText: "Confirm password",
+                  hintStyle: TextStyle(color: Color(0xFF66C8C8)),
+                  filled: true,
+                  fillColor: Colors.black26,
+                  border: OutlineInputBorder(),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Color(0xFF66C8C8)),
+                  ),
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 30),
+
             ElevatedButton(
               onPressed: () {
                 if (passwordController.text.isEmpty) {
@@ -89,18 +115,39 @@ class PasswordPage extends StatelessWidget {
                   return;
                 }
 
-                if (newUser) {
-                  print("Account created for: $email");
-                } else {
-                  print("User logged in with: $email");
+                if (newUser &&
+                    passwordController.text != confirmPasswordController.text) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Passwords do not match.',
+                        style: TextStyle(color: Color(0xFF66C8C8)),
+                      ),
+                      backgroundColor: Color(0xFF2E2E2E),
+                    ),
+                  );
+                  return;
                 }
 
-                // التوجيه إلى واجهة المستخدم العادي
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => const MainLayoutNormal()),
-                      (route) => false,
-                );
+                if (newUser) {
+                  // Go to profile setup
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => NewUserProfilePage(
+                        email: email,
+                        password: passwordController.text,
+                      ),
+                    ),
+                  );
+                } else {
+                  // Directly login
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const MainLayoutNormal()),
+                        (route) => false,
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF2E2E2E),
@@ -108,7 +155,7 @@ class PasswordPage extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: Text(
-                newUser ? "Create a New Account" : "Login",
+                newUser ? "Create Account" : "Login",
                 style: const TextStyle(
                   color: Color(0xFF66C8C8),
                   fontSize: 18,

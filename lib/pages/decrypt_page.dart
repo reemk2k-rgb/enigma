@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:login1/pages/decryption_success_page.dart';
+
 class DecryptPage extends StatefulWidget {
   const DecryptPage({super.key});
 
@@ -8,14 +9,8 @@ class DecryptPage extends StatefulWidget {
 }
 
 class _DecryptPageState extends State<DecryptPage> {
-  String? selectedDecryption;
-
-  final List<String> decryptionTypes = [
-    "AES",
-    "RSA",
-    "SHA-256",
-    "Custom"
-  ];
+  final TextEditingController keyController = TextEditingController();
+  final TextEditingController textController = TextEditingController();
 
   void _showOptions() {
     showModalBottomSheet(
@@ -32,11 +27,13 @@ class _DecryptPageState extends State<DecryptPage> {
             children: [
               ListTile(
                 leading: const Icon(Icons.image, color: Color(0xFF66C8C8)),
-                title: const Text("Image", style: TextStyle(color: Colors.white)),
+                title:
+                const Text("Image", style: TextStyle(color: Colors.white)),
                 onTap: () => Navigator.pop(context),
               ),
               ListTile(
-                leading: const Icon(Icons.insert_drive_file, color: Color(0xFF66C8C8)),
+                leading:
+                const Icon(Icons.insert_drive_file, color: Color(0xFF66C8C8)),
                 title: const Text("File", style: TextStyle(color: Colors.white)),
                 onTap: () => Navigator.pop(context),
               ),
@@ -54,6 +51,29 @@ class _DecryptPageState extends State<DecryptPage> {
           ),
         );
       },
+    );
+  }
+
+  void _decryptAction() {
+    if (keyController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("You should enter the key."),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    String decryptedText =
+        "example_decrypted_data"; // Replace with your real decryption logic
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            DecryptionSuccessPage(decryptedText: decryptedText),
+      ),
     );
   }
 
@@ -75,7 +95,7 @@ class _DecryptPageState extends State<DecryptPage> {
             ),
             const SizedBox(height: 40),
 
-            // البوكس مع زر +
+            // Box with + button and text field
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -94,11 +114,12 @@ class _DecryptPageState extends State<DecryptPage> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  const TextField(
+                  TextField(
+                    controller: textController,
                     maxLength: 200,
                     maxLines: 5,
-                    style: TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
                       hintText: 'Paste your encrypted text',
                       hintStyle: TextStyle(color: Color(0xFF66C8C8)),
                       filled: true,
@@ -117,65 +138,50 @@ class _DecryptPageState extends State<DecryptPage> {
             ),
 
             const SizedBox(height: 20),
+
+            // Key field
             const Text(
-              'Unlimited Attempts 🎉',
+              "Key",
               style: TextStyle(
                 color: Color(0xFF66C8C8),
                 fontSize: 16,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 20),
-
-            // Dropdown لاختيار نوع فك التشفير
-            DropdownButtonFormField<String>(
-              value: selectedDecryption,
-              dropdownColor: const Color(0xFF2E2E2E),
+            const SizedBox(height: 8),
+            TextField(
+              controller: keyController,
+              obscureText: true,
+              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                labelText: "Select Decryption Type",
-                labelStyle: const TextStyle(color: Color(0xFF66C8C8)),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(color: Color(0xFF66C8C8)),
+                hintText: 'Enter your key',
+                hintStyle: const TextStyle(color: Color(0xFF66C8C8)),
+                filled: true,
+                fillColor: Colors.black26,
+                border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFF66C8C8)),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(color: Color(0xFF66C8C8)),
                   borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFF66C8C8)),
                 ),
               ),
-              icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF66C8C8)),
-              items: decryptionTypes
-                  .map((type) => DropdownMenuItem(
-                value: type,
-                child: Text(type, style: const TextStyle(color: Colors.white)),
-              ))
-                  .toList(),
-              onChanged: (value) {
-                setState(() {
-                  selectedDecryption = value;
-                });
-              },
             ),
 
             const SizedBox(height: 30),
 
             Center(
               child: ElevatedButton.icon(
-                onPressed: () {
-                  String decryptedText = "example_decrypted_data"; // هنا حط نتيجة فك التشفير
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => DecryptionSuccessPage(decryptedText: decryptedText),
-                    ),
-                  );
-                },
+                onPressed: _decryptAction,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2E2E2E),
                   side: const BorderSide(color: Color(0xFF66C8C8)),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                  padding:
+                  const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
                 ),
                 icon: const Icon(Icons.lock_open, color: Color(0xFF66C8C8)),
                 label: const Text(
