@@ -11,12 +11,7 @@ class EncryptPageNormal extends StatefulWidget {
 class _EncryptPageNormalState extends State<EncryptPageNormal> {
   String? selectedEncryption;
 
-  final List<String> encryptionTypes = [
-    "AES",
-    "RSA",
-    "SHA-256",
-    "Custom"
-  ];
+  final List<String> encryptionTypes = ["AES", "RSA", "SHA-256", "Custom"];
 
   void _showOptions() {
     showModalBottomSheet(
@@ -32,23 +27,22 @@ class _EncryptPageNormalState extends State<EncryptPageNormal> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.image, color: Color(0xFF66C8C8)),
-                title: const Text("Image", style: TextStyle(color: Colors.white)),
-                onTap: () => Navigator.pop(context),
-              ),
-              ListTile(
-                leading: const Icon(Icons.insert_drive_file, color: Color(0xFF66C8C8)),
+                leading:
+                const Icon(Icons.insert_drive_file, color: Color(0xFF66C8C8)),
                 title: const Text("File", style: TextStyle(color: Colors.white)),
                 onTap: () => Navigator.pop(context),
               ),
               ListTile(
-                leading: const Icon(Icons.link, color: Color(0xFF66C8C8)),
+                leading:
+                const Icon(Icons.link, color: Color(0xFF66C8C8)),
                 title: const Text("URL", style: TextStyle(color: Colors.white)),
                 onTap: () => Navigator.pop(context),
               ),
               ListTile(
-                leading: const Icon(Icons.wifi, color: Color(0xFF66C8C8)),
-                title: const Text("Wi-Fi", style: TextStyle(color: Colors.white)),
+                leading:
+                const Icon(Icons.wifi, color: Color(0xFF66C8C8)),
+                title:
+                const Text("Wi-Fi", style: TextStyle(color: Colors.white)),
                 onTap: () => Navigator.pop(context),
               ),
             ],
@@ -67,7 +61,6 @@ class _EncryptPageNormalState extends State<EncryptPageNormal> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // المفتاح فوق يسار
             Align(
               alignment: Alignment.topLeft,
               child: Image.asset(
@@ -77,13 +70,12 @@ class _EncryptPageNormalState extends State<EncryptPageNormal> {
             ),
             const SizedBox(height: 40),
 
-            // البوكس مع زر +
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.black26,
-                border: Border.all(color: Color(0xFF66C8C8)),
+                border: Border.all(color: const Color(0xFF66C8C8)),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -118,10 +110,8 @@ class _EncryptPageNormalState extends State<EncryptPageNormal> {
               ),
             ),
 
-
             const SizedBox(height: 20),
 
-            // Dropdown لاختيار نوع التشفير
             DropdownButtonFormField<String>(
               value: selectedEncryption,
               dropdownColor: const Color(0xFF2E2E2E),
@@ -141,7 +131,8 @@ class _EncryptPageNormalState extends State<EncryptPageNormal> {
               items: encryptionTypes
                   .map((type) => DropdownMenuItem(
                 value: type,
-                child: Text(type, style: const TextStyle(color: Colors.white)),
+                child:
+                Text(type, style: const TextStyle(color: Colors.white)),
               ))
                   .toList(),
               onChanged: (value) {
@@ -156,22 +147,23 @@ class _EncryptPageNormalState extends State<EncryptPageNormal> {
             Center(
               child: ElevatedButton.icon(
                 onPressed: () {
-                  String encryptedText = "example_encrypted_data"; // هنا حط نتيجة التشفير
+                  String encryptedText = "example_encrypted_data";
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => EncryptionSuccessPage(encryptedText: encryptedText),
+                      builder: (context) =>
+                          EncryptionSuccessPage(encryptedText: encryptedText),
                     ),
                   );
                 },
-
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2E2E2E),
                   side: const BorderSide(color: Color(0xFF66C8C8)),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                  padding:
+                  const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
                 ),
                 icon: const Icon(Icons.lock, color: Color(0xFF66C8C8)),
                 label: const Text(

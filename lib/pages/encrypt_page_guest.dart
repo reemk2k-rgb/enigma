@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:login1/pages/EncryptionSuccessPageGuest.dart'; // <- use your renamed file
 
 class GuestPage extends StatelessWidget {
   const GuestPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final TextEditingController _textController = TextEditingController();
+
     return Scaffold(
       backgroundColor: const Color(0xFF2E2E2E),
       body: Padding(
@@ -22,12 +25,14 @@ class GuestPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 80),
+
             // The TextField
-            const TextField(
+            TextField(
+              controller: _textController,
               maxLength: 100,
               maxLines: 5,
-              style: TextStyle(color: Colors.white),
-              decoration: InputDecoration(
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
                 hintText: 'Write/paste your text up to 100',
                 hintStyle: TextStyle(color: Color(0xFF66C8C8)),
                 filled: true,
@@ -42,6 +47,7 @@ class GuestPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
+
             const Text(
               'Maximum Attempts: 3',
               style: TextStyle(
@@ -49,11 +55,39 @@ class GuestPage extends StatelessWidget {
                 fontSize: 16,
               ),
             ),
+
             const SizedBox(height: 20),
+
             // The Encrypt button
             Center(
               child: ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: () {
+                  final text = _textController.text.trim();
+                  if (text.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          "Please enter some text.",
+                          style: TextStyle(color: Color(0xFF66C8C8)),
+                        ),
+                        backgroundColor: Color(0xFF2E2E2E),
+                      ),
+                    );
+                    return;
+                  }
+
+                  // Simple example encryption (you can replace with your real one)
+                  final encryptedText = text.split('').reversed.join();
+
+                  // Navigate to success page — updated to the renamed class
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          EncryptionSuccessPageGuest(encryptedText: encryptedText),
+                    ),
+                  );
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2E2E2E),
                   side: const BorderSide(color: Color(0xFF66C8C8)),
@@ -61,7 +95,9 @@ class GuestPage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   padding: const EdgeInsets.symmetric(
-                      vertical: 12, horizontal: 24),
+                    vertical: 12,
+                    horizontal: 24,
+                  ),
                 ),
                 icon: const Icon(Icons.lock, color: Color(0xFF66C8C8)),
                 label: const Text(

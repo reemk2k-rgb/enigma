@@ -1,10 +1,11 @@
+// lib/pages/EncryptionSuccessPageGuest.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class GuestSuccessPage extends StatelessWidget {
+class EncryptionSuccessPageGuest extends StatelessWidget {
   final String encryptedText;
 
-  const GuestSuccessPage({super.key, required this.encryptedText});
+  const EncryptionSuccessPageGuest({super.key, required this.encryptedText});
 
   Future<void> _copyToClipboard(BuildContext context) async {
     await Clipboard.setData(ClipboardData(text: encryptedText));

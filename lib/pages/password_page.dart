@@ -12,6 +12,13 @@ class PasswordPage extends StatelessWidget {
     return email.endsWith("new.com");
   }
 
+  bool _isValidPassword(String password) {
+    // ✅ Must contain upper, lower, number, and symbol
+    final passwordRegex =
+    RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$');
+    return passwordRegex.hasMatch(password);
+  }
+
   @override
   Widget build(BuildContext context) {
     final TextEditingController passwordController = TextEditingController();
@@ -124,6 +131,21 @@ class PasswordPage extends StatelessWidget {
                         style: TextStyle(color: Color(0xFF66C8C8)),
                       ),
                       backgroundColor: Color(0xFF2E2E2E),
+                    ),
+                  );
+                  return;
+                }
+
+                // ✅ Password strength validation for new users
+                if (newUser && !_isValidPassword(passwordController.text)) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Password must contain:\n• At least 8 characters\n• Uppercase and lowercase letters\n• A number\n• A special symbol',
+                        style: TextStyle(color: Color(0xFF66C8C8)),
+                      ),
+                      backgroundColor: Color(0xFF2E2E2E),
+                      duration: Duration(seconds: 5),
                     ),
                   );
                   return;

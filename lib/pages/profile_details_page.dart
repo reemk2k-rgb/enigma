@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 class ProfileDetailsPage extends StatefulWidget {
   const ProfileDetailsPage({super.key});
 
@@ -12,6 +11,7 @@ class _ProfileDetailsPageState extends State<ProfileDetailsPage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _mobileController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _ageController = TextEditingController(); // ✅ added
 
   String _selectedGender = 'Male';
 
@@ -48,6 +48,10 @@ class _ProfileDetailsPageState extends State<ProfileDetailsPage> {
             _buildTextField(controller: _emailController, keyboardType: TextInputType.emailAddress),
 
             const SizedBox(height: 20),
+            _buildLabel('Age'), // ✅ added label
+            _buildTextField(controller: _ageController, keyboardType: TextInputType.number), // ✅ added field
+
+            const SizedBox(height: 20),
             _buildLabel('Gender'),
             Row(
               children: [
@@ -62,7 +66,6 @@ class _ProfileDetailsPageState extends State<ProfileDetailsPage> {
               text: 'Update',
               color: const Color(0xFF66C8C8),
               onPressed: () {
-                // تنفيذ التحديث، بإمكانك إضافة منطق الحفظ هنا
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Profile updated')),
                 );
@@ -70,7 +73,6 @@ class _ProfileDetailsPageState extends State<ProfileDetailsPage> {
             ),
 
             const SizedBox(height: 20),
-
           ],
         ),
       ),
@@ -140,5 +142,4 @@ class _ProfileDetailsPageState extends State<ProfileDetailsPage> {
       ),
     );
   }
-
 }

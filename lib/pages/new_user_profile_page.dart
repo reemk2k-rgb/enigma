@@ -18,11 +18,13 @@ class NewUserProfilePage extends StatefulWidget {
 class _NewUserProfilePageState extends State<NewUserProfilePage> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController mobileController = TextEditingController();
+  final TextEditingController ageController = TextEditingController(); // ✅ Added age controller
   String? selectedGender;
 
   void _createAccount() {
     if (nameController.text.isEmpty ||
         mobileController.text.isEmpty ||
+        ageController.text.isEmpty || // ✅ Check age
         selectedGender == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -41,6 +43,7 @@ class _NewUserProfilePageState extends State<NewUserProfilePage> {
     print('Password: ${widget.password}');
     print('Name: ${nameController.text}');
     print('Mobile: ${mobileController.text}');
+    print('Age: ${ageController.text}'); // ✅ Print age
     print('Gender: $selectedGender');
 
     Navigator.pushAndRemoveUntil(
@@ -100,6 +103,24 @@ class _NewUserProfilePageState extends State<NewUserProfilePage> {
                 style: const TextStyle(color: Colors.white),
                 decoration: const InputDecoration(
                   hintText: "Full Name",
+                  hintStyle: TextStyle(color: Color(0xFF66C8C8)),
+                  filled: true,
+                  fillColor: Colors.black26,
+                  border: OutlineInputBorder(),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Color(0xFF66C8C8)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Age ✅
+              TextField(
+                controller: ageController,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  hintText: "Age",
                   hintStyle: TextStyle(color: Color(0xFF66C8C8)),
                   filled: true,
                   fillColor: Colors.black26,

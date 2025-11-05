@@ -26,25 +26,23 @@ class _DecryptPageState extends State<DecryptPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.image, color: Color(0xFF66C8C8)),
+                leading:
+                const Icon(Icons.insert_drive_file, color: Color(0xFF66C8C8)),
                 title:
-                const Text("Image", style: TextStyle(color: Colors.white)),
+                const Text("File", style: TextStyle(color: Colors.white)),
                 onTap: () => Navigator.pop(context),
               ),
               ListTile(
                 leading:
-                const Icon(Icons.insert_drive_file, color: Color(0xFF66C8C8)),
-                title: const Text("File", style: TextStyle(color: Colors.white)),
-                onTap: () => Navigator.pop(context),
-              ),
-              ListTile(
-                leading: const Icon(Icons.link, color: Color(0xFF66C8C8)),
+                const Icon(Icons.link, color: Color(0xFF66C8C8)),
                 title: const Text("URL", style: TextStyle(color: Colors.white)),
                 onTap: () => Navigator.pop(context),
               ),
               ListTile(
-                leading: const Icon(Icons.wifi, color: Color(0xFF66C8C8)),
-                title: const Text("Wi-Fi", style: TextStyle(color: Colors.white)),
+                leading:
+                const Icon(Icons.wifi, color: Color(0xFF66C8C8)),
+                title:
+                const Text("Wi-Fi", style: TextStyle(color: Colors.white)),
                 onTap: () => Navigator.pop(context),
               ),
             ],
@@ -65,8 +63,7 @@ class _DecryptPageState extends State<DecryptPage> {
       return;
     }
 
-    String decryptedText =
-        "example_decrypted_data"; // Replace with your real decryption logic
+    String decryptedText = "example_decrypted_data";
 
     Navigator.push(
       context,
@@ -95,7 +92,6 @@ class _DecryptPageState extends State<DecryptPage> {
             ),
             const SizedBox(height: 40),
 
-            // Box with + button and text field
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -139,7 +135,6 @@ class _DecryptPageState extends State<DecryptPage> {
 
             const SizedBox(height: 20),
 
-            // Key field
             const Text(
               "Key",
               style: TextStyle(
