@@ -1,22 +1,127 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:login1/pages/EncryptionSuccessPageGuest.dart'; // <- use your renamed file
+import 'package:http/http.dart' as http;
+import 'package:login1/constants.dart';
+import 'package:login1/pages/EncryptionSuccessPageGuest.dart';
 
-class GuestPage extends StatelessWidget {
+class GuestPage extends StatefulWidget {
   const GuestPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final TextEditingController _textController = TextEditingController();
+  State<GuestPage> createState() => _GuestPageState();
+}
 
+class _GuestPageState extends State<GuestPage> {
+  final TextEditingController _textController = TextEditingController();
+  int attemptsLeft = 3;
+  bool isLoading = false;
+
+  Future<void> _encryptText() async {
+    final text = _textController.text.trim();
+
+    // Check for empty input
+    if (text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please enter some text."),
+          backgroundColor: Color(0xFF2E2E2E),
+        ),
+      );
+      return;
+    }
+
+    // Check word limit (max 100 words)
+    final wordCount = text.split(RegExp(r'\s+')).length;
+    if (wordCount > 100) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("You can only encrypt up to 100 words."),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    // Check remaining attempts
+    if (attemptsLeft <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("You have reached the maximum number of attempts."),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final url = Uri.parse('$baseUrl/crypto/encrypt/guest');
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'text': text}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        if (data['success'] == true) {
+          final encryptedText = data['encrypted_text'];
+
+          setState(() {
+            attemptsLeft -= 1;
+          });
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  EncryptionSuccessPageGuest(encryptedText: encryptedText),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(data['error'] ?? 'Encryption failed.'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+            Text('Server error: ${response.statusCode.toString()}'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error connecting to server: $e"),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF2E2E2E),
       body: Padding(
-        // The top padding has been increased to lower the entire content.
         padding: const EdgeInsets.fromLTRB(24, 100, 24, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // The image at the top
             Align(
               alignment: Alignment.topLeft,
               child: Image.asset(
@@ -26,14 +131,13 @@ class GuestPage extends StatelessWidget {
             ),
             const SizedBox(height: 80),
 
-            // The TextField
             TextField(
               controller: _textController,
-              maxLength: 100,
+              maxLength: 500, // still can paste large but we count words
               maxLines: 5,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
-                hintText: 'Write/paste your text up to 100',
+                hintText: 'Write/paste your text up to 100 words',
                 hintStyle: TextStyle(color: Color(0xFF66C8C8)),
                 filled: true,
                 fillColor: Colors.black26,
@@ -48,9 +152,9 @@ class GuestPage extends StatelessWidget {
             ),
             const SizedBox(height: 10),
 
-            const Text(
-              'Maximum Attempts: 3',
-              style: TextStyle(
+            Text(
+              'Attempts Left: $attemptsLeft',
+              style: const TextStyle(
                 color: Color(0xFF66C8C8),
                 fontSize: 16,
               ),
@@ -58,36 +162,9 @@ class GuestPage extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // The Encrypt button
             Center(
               child: ElevatedButton.icon(
-                onPressed: () {
-                  final text = _textController.text.trim();
-                  if (text.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          "Please enter some text.",
-                          style: TextStyle(color: Color(0xFF66C8C8)),
-                        ),
-                        backgroundColor: Color(0xFF2E2E2E),
-                      ),
-                    );
-                    return;
-                  }
-
-                  // Simple example encryption (you can replace with your real one)
-                  final encryptedText = text.split('').reversed.join();
-
-                  // Navigate to success page — updated to the renamed class
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          EncryptionSuccessPageGuest(encryptedText: encryptedText),
-                    ),
-                  );
-                },
+                onPressed: isLoading ? null : _encryptText,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2E2E2E),
                   side: const BorderSide(color: Color(0xFF66C8C8)),
@@ -99,7 +176,16 @@ class GuestPage extends StatelessWidget {
                     horizontal: 24,
                   ),
                 ),
-                icon: const Icon(Icons.lock, color: Color(0xFF66C8C8)),
+                icon: isLoading
+                    ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    color: Color(0xFF66C8C8),
+                    strokeWidth: 2,
+                  ),
+                )
+                    : const Icon(Icons.lock, color: Color(0xFF66C8C8)),
                 label: const Text(
                   'Encrypt',
                   style: TextStyle(

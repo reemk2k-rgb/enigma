@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:login1/constants.dart';
 import 'package:login1/pages/decryption_success_page.dart';
 
 class DecryptPage extends StatefulWidget {
@@ -11,6 +14,8 @@ class DecryptPage extends StatefulWidget {
 class _DecryptPageState extends State<DecryptPage> {
   final TextEditingController keyController = TextEditingController();
   final TextEditingController textController = TextEditingController();
+
+  bool isLoading = false;
 
   void _showOptions() {
     showModalBottomSheet(
@@ -52,26 +57,59 @@ class _DecryptPageState extends State<DecryptPage> {
     );
   }
 
-  void _decryptAction() {
-    if (keyController.text.isEmpty) {
+  Future<void> _decryptAction() async {
+    if (textController.text.isEmpty || keyController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("You should enter the key."),
+          content: Text("You must enter the encrypted text and the key."),
           backgroundColor: Colors.redAccent,
         ),
       );
       return;
     }
 
-    String decryptedText = "example_decrypted_data";
+    setState(() => isLoading = true);
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            DecryptionSuccessPage(decryptedText: decryptedText),
-      ),
-    );
+    try {
+      final url = Uri.parse('$baseUrl/crypto/decrypt');
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'data_type': 'text',
+          'encrypted': textController.text,
+          'key_b64': keyController.text,
+          'algorithm': 'AES', // Temporarily until we add encryption type selection
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  DecryptionSuccessPage(decryptedText: data['decrypted']),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: ${data['error'] ?? 'Decryption failed'}')),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to connect to server (${response.statusCode})')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred during connection: $e')),
+      );
+    } finally {
+      setState(() => isLoading = false);
+    }
   }
 
   @override
@@ -116,7 +154,7 @@ class _DecryptPageState extends State<DecryptPage> {
                     maxLines: 5,
                     style: const TextStyle(color: Colors.white),
                     decoration: const InputDecoration(
-                      hintText: 'Paste your encrypted text',
+                      hintText: 'Paste the encrypted text here',
                       hintStyle: TextStyle(color: Color(0xFF66C8C8)),
                       filled: true,
                       fillColor: Colors.black26,
@@ -149,7 +187,7 @@ class _DecryptPageState extends State<DecryptPage> {
               obscureText: true,
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                hintText: 'Enter your key',
+                hintText: 'Enter the key used for encryption',
                 hintStyle: const TextStyle(color: Color(0xFF66C8C8)),
                 filled: true,
                 fillColor: Colors.black26,
@@ -167,7 +205,9 @@ class _DecryptPageState extends State<DecryptPage> {
             const SizedBox(height: 30),
 
             Center(
-              child: ElevatedButton.icon(
+              child: isLoading
+                  ? const CircularProgressIndicator(color: Color(0xFF66C8C8))
+                  : ElevatedButton.icon(
                 onPressed: _decryptAction,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2E2E2E),
@@ -175,10 +215,11 @@ class _DecryptPageState extends State<DecryptPage> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  padding:
-                  const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 12, horizontal: 24),
                 ),
-                icon: const Icon(Icons.lock_open, color: Color(0xFF66C8C8)),
+                icon:
+                const Icon(Icons.lock_open, color: Color(0xFF66C8C8)),
                 label: const Text(
                   'Decrypt',
                   style: TextStyle(

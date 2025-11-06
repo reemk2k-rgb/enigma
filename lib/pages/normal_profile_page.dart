@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'profile_details_page.dart';
 import 'privacy_policy_page.dart';
 import 'terms_and_conditions_page.dart';
-import '../main_layout.dart'; // <-- تأكد أنه مستورد
+import '../main_layout.dart';
+import '../constants.dart'; // ← لازم يكون فيه baseUrl
 
 class NormalUserProfilePage extends StatelessWidget {
   const NormalUserProfilePage({super.key});
@@ -50,8 +53,6 @@ class NormalUserProfilePage extends StatelessWidget {
             },
           ),
           const Divider(color: Color(0xFF66C8C8)),
-
-          // 🔻 زر تسجيل الخروج مع تأكيد
           _buildOption(
             context,
             icon: Icons.logout,
@@ -91,7 +92,7 @@ class NormalUserProfilePage extends StatelessWidget {
     );
   }
 
-  // 🔻 دالة عرض نافذة تأكيد قبل تسجيل الخروج
+  // 🔻 نافذة تأكيد قبل تسجيل الخروج
   void _showLogoutConfirmation(BuildContext context) {
     showDialog(
       context: context,
@@ -110,38 +111,64 @@ class NormalUserProfilePage extends StatelessWidget {
             TextButton(
               child: const Text('Cancel', style: TextStyle(color: Color(0xFF66C8C8))),
               onPressed: () {
-                Navigator.of(dialogContext).pop(); // تغلق النافذة فقط
+                Navigator.of(dialogContext).pop();
               },
             ),
             TextButton(
               child: const Text('Logout', style: TextStyle(color: Colors.redAccent)),
-              onPressed: () {
-                Navigator.of(dialogContext).pop(); // تغلق النافذة
-                // 🔁 ترجع إلى وضع الزائر
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => const MainLayout()),
-                      (route) => false,
-                );
-
-
-                Future.delayed(Duration(milliseconds: 300), () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Logged out successfully',
-                        style: TextStyle(color: Color(0xFF66C8C8)),
-                      ),
-                      backgroundColor: Color(0xFF2E2E2E),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                });
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+                await _logoutFromBackend(context);
               },
             ),
           ],
         );
       },
     );
+  }
+
+  // 🔻 دالة الربط مع الـ backend لتسجيل الخروج
+  Future<void> _logoutFromBackend(BuildContext context) async {
+    try {
+      final url = Uri.parse('$baseUrl/auth/logout'); // endpoint backend
+      final response = await http.post(url);
+
+      if (response.statusCode == 200) {
+        // لو نجح تسجيل الخروج
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const MainLayout()),
+              (route) => false,
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Logged out successfully',
+              style: TextStyle(color: Color(0xFF66C8C8)),
+            ),
+            backgroundColor: Color(0xFF2E2E2E),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Server error: ${response.statusCode}',
+              style: const TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Logout failed: $e'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 }

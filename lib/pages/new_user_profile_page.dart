@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:login1/main_layout_normal.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class NewUserProfilePage extends StatefulWidget {
   final String email;
-  final String password; // ✅ Password from previous page
+  final String password;
 
   const NewUserProfilePage({
     super.key,
@@ -18,13 +20,14 @@ class NewUserProfilePage extends StatefulWidget {
 class _NewUserProfilePageState extends State<NewUserProfilePage> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController mobileController = TextEditingController();
-  final TextEditingController ageController = TextEditingController(); // ✅ Added age controller
+  final TextEditingController ageController = TextEditingController();
   String? selectedGender;
+  bool _isLoading = false;
 
-  void _createAccount() {
+  Future<void> _createAccount() async {
     if (nameController.text.isEmpty ||
         mobileController.text.isEmpty ||
-        ageController.text.isEmpty || // ✅ Check age
+        ageController.text.isEmpty ||
         selectedGender == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -38,19 +41,62 @@ class _NewUserProfilePageState extends State<NewUserProfilePage> {
       return;
     }
 
-    print('✅ Account Created:');
-    print('Email: ${widget.email}');
-    print('Password: ${widget.password}');
-    print('Name: ${nameController.text}');
-    print('Mobile: ${mobileController.text}');
-    print('Age: ${ageController.text}'); // ✅ Print age
-    print('Gender: $selectedGender');
+    setState(() => _isLoading = true);
 
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => const MainLayoutNormal()),
-          (route) => false,
-    );
+    try {
+      final response = await http.post(
+        Uri.parse('http://127.0.0.1:5000/auth/register'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          "name": nameController.text,
+          "email": widget.email,
+          "password": widget.password,
+          "confirm_password": widget.password,
+          "phone": mobileController.text,
+          "age": ageController.text,
+          "gender": selectedGender,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 201 && data["token"] != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Account created successfully!"),
+            backgroundColor: Color(0xFF2E2E2E),
+          ),
+        );
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const MainLayoutNormal()),
+              (route) => false,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              data["error"] ?? "Registration failed",
+              style: const TextStyle(color: Color(0xFF66C8C8)),
+            ),
+            backgroundColor: const Color(0xFF2E2E2E),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Error: $e",
+            style: const TextStyle(color: Color(0xFF66C8C8)),
+          ),
+          backgroundColor: const Color(0xFF2E2E2E),
+        ),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -82,7 +128,6 @@ class _NewUserProfilePageState extends State<NewUserProfilePage> {
               ),
               const SizedBox(height: 30),
 
-              // Email (read-only)
               TextField(
                 enabled: false,
                 controller: TextEditingController(text: widget.email),
@@ -97,7 +142,6 @@ class _NewUserProfilePageState extends State<NewUserProfilePage> {
               ),
               const SizedBox(height: 20),
 
-              // Name
               TextField(
                 controller: nameController,
                 style: const TextStyle(color: Colors.white),
@@ -114,7 +158,6 @@ class _NewUserProfilePageState extends State<NewUserProfilePage> {
               ),
               const SizedBox(height: 20),
 
-              // Age ✅
               TextField(
                 controller: ageController,
                 keyboardType: TextInputType.number,
@@ -132,7 +175,6 @@ class _NewUserProfilePageState extends State<NewUserProfilePage> {
               ),
               const SizedBox(height: 20),
 
-              // Mobile
               TextField(
                 controller: mobileController,
                 keyboardType: TextInputType.phone,
@@ -150,7 +192,6 @@ class _NewUserProfilePageState extends State<NewUserProfilePage> {
               ),
               const SizedBox(height: 20),
 
-              // Gender dropdown
               DropdownButtonFormField<String>(
                 value: selectedGender,
                 dropdownColor: const Color(0xFF2E2E2E),
@@ -181,13 +222,15 @@ class _NewUserProfilePageState extends State<NewUserProfilePage> {
               const SizedBox(height: 30),
 
               ElevatedButton(
-                onPressed: _createAccount,
+                onPressed: _isLoading ? null : _createAccount,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2E2E2E),
                   side: const BorderSide(color: Color(0xFF66C8C8)),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                child: const Text(
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Color(0xFF66C8C8))
+                    : const Text(
                   "Save & Continue",
                   style: TextStyle(
                     color: Color(0xFF66C8C8),

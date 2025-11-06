@@ -1,144 +1,144 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'email_page.dart';
+import 'terms_and_conditions_page.dart';
+import 'privacy_policy_page.dart';
 
-class ProfileDetailsPage extends StatefulWidget {
+class ProfileDetailsPage extends StatelessWidget {
   const ProfileDetailsPage({super.key});
 
-  @override
-  State<ProfileDetailsPage> createState() => _ProfileDetailsPageState();
-}
+  // ✅ دالة تفحص من الـ backend إذا المستخدم مسجل أو لا
+  Future<void> _checkLoginStatus(BuildContext context) async {
+    try {
+      final url = Uri.parse('https://your-backend.com/api/checkLogin'); // 🔗 غيّرها برابطك
+      final response = await http.get(url);
 
-class _ProfileDetailsPageState extends State<ProfileDetailsPage> {
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _mobileController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _ageController = TextEditingController(); // ✅ added
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final bool loggedIn = data['loggedIn'] ?? false;
 
-  String _selectedGender = 'Male';
+        if (loggedIn) {
+          // ✅ المستخدم مسجل دخول — انتقل مباشرة للصفحة الرئيسية
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Welcome back!'),
+              backgroundColor: Color(0xFF2E2E2E),
+            ),
+          );
+          // هنا تقدر توجهه إلى MainLayoutNormal مثلاً
+          // Navigator.push(context, MaterialPageRoute(builder: (_) => const MainLayoutNormal()));
+        } else {
+          // 🔁 المستخدم غير مسجل → انتقل إلى صفحة الإيميل
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const EmailPage()),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Server error, try again later.'),
+            backgroundColor: Color(0xFF2E2E2E),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Connection error: $e'),
+          backgroundColor: const Color(0xFF2E2E2E),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF2E2E2E),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF2E2E2E),
-        elevation: 0,
-        title: const Text(
-          'My Profile',
-          style: TextStyle(color: Color(0xFF66C8C8)),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF66C8C8)),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
+      body: SingleChildScrollView(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildLabel('Name'),
-            _buildTextField(controller: _nameController),
+            const SizedBox(height: 100),
 
-            const SizedBox(height: 20),
-            _buildLabel('Mobile number'),
-            _buildTextField(controller: _mobileController, keyboardType: TextInputType.phone),
-
-            const SizedBox(height: 20),
-            _buildLabel('Email address'),
-            _buildTextField(controller: _emailController, keyboardType: TextInputType.emailAddress),
-
-            const SizedBox(height: 20),
-            _buildLabel('Age'), // ✅ added label
-            _buildTextField(controller: _ageController, keyboardType: TextInputType.number), // ✅ added field
-
-            const SizedBox(height: 20),
-            _buildLabel('Gender'),
-            Row(
-              children: [
-                _buildGenderOption('Male'),
-                const SizedBox(width: 20),
-                _buildGenderOption('Female'),
-              ],
+            // ✅ تسجيل الدخول / إنشاء الحساب (يرتبط بالـ backend)
+            _ProfileOptionRow(
+              icon: Icons.person_outline,
+              text: 'Login / Create account',
+              onTap: () => _checkLoginStatus(context),
             ),
 
-            const SizedBox(height: 30),
-            _buildButton(
-              text: 'Update',
-              color: const Color(0xFF66C8C8),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Profile updated')),
+            const Divider(color: Color(0xFF66C8C8)),
+
+            // سياسة الخصوصية
+            _ProfileOptionRow(
+              icon: Icons.lock_outline,
+              text: 'Privacy Policy',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const PrivacyPolicyPage()),
                 );
               },
             ),
 
-            const SizedBox(height: 20),
+            const Divider(color: Color(0xFF66C8C8)),
+
+            // الشروط والأحكام
+            _ProfileOptionRow(
+              icon: Icons.description,
+              text: 'Terms and Conditions',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const TermsAndConditionsPage()),
+                );
+              },
+            ),
+
+            const Divider(color: Color(0xFF66C8C8)),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildLabel(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-        color: Color(0xFF66C8C8),
-        fontSize: 16,
-      ),
-    );
-  }
+class _ProfileOptionRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final VoidCallback onTap;
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      style: const TextStyle(color: Colors.white),
-      decoration: const InputDecoration(
-        filled: true,
-        fillColor: Color(0xFF3A3A3A),
-        border: OutlineInputBorder(),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Color(0xFF66C8C8)),
-        ),
-      ),
-    );
-  }
+  const _ProfileOptionRow({
+    required this.icon,
+    required this.text,
+    required this.onTap,
+  });
 
-  Widget _buildGenderOption(String gender) {
-    return Row(
-      children: [
-        Radio<String>(
-          activeColor: const Color(0xFF66C8C8),
-          value: gender,
-          groupValue: _selectedGender,
-          onChanged: (value) {
-            setState(() {
-              _selectedGender = value!;
-            });
-          },
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
+        child: Row(
+          children: [
+            Icon(icon, color: const Color(0xFF66C8C8)),
+            const SizedBox(width: 20),
+            Text(
+              text,
+              style: const TextStyle(
+                color: Color(0xFF66C8C8),
+                fontSize: 18,
+              ),
+            ),
+            const Spacer(),
+            const Icon(Icons.arrow_forward_ios,
+                color: Color(0xFF66C8C8), size: 16),
+          ],
         ),
-        Text(
-          gender,
-          style: const TextStyle(color: Colors.white),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildButton({required String text, required Color color, required VoidCallback onPressed}) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-        ),
-        onPressed: onPressed,
-        child: Text(text, style: const TextStyle(fontSize: 16)),
       ),
     );
   }

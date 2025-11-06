@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
 import 'pages/profile_page.dart';
 import 'pages/awareness_page.dart';
 import 'pages/decrypt_page.dart';
@@ -21,6 +24,38 @@ class _MainLayoutState extends State<MainLayout> {
     GuestPage(),
   ];
 
+  final String baseUrl = "https://YOUR_NGROK_LINK.ngrok.io"; // 🔗 ضعي رابط ngrok هنا
+
+  // 🛰️ اختبار الاتصال بالسيرفر (backend)
+  Future<void> testConnection() async {
+    try {
+      final response = await http.get(Uri.parse("$baseUrl/ping"));
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              "✅ Connected to backend successfully!",
+              style: TextStyle(color: Color(0xFF66C8C8)),
+            ),
+            backgroundColor: Color(0xFF2E2E2E),
+          ),
+        );
+      } else {
+        throw Exception("Server responded with ${response.statusCode}");
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "❌ Connection failed: $e",
+            style: const TextStyle(color: Color(0xFF66C8C8)),
+          ),
+          backgroundColor: const Color(0xFF2E2E2E),
+        ),
+      );
+    }
+  }
+
   void _onItemTapped(int index) {
     if (index == 2) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -33,9 +68,8 @@ class _MainLayoutState extends State<MainLayout> {
             label: 'sign in or create account',
             textColor: const Color(0xFF66C8C8),
             onPressed: () {
-              // This is the correct navigation logic
               setState(() {
-                _selectedIndex = 0; // Navigates to the ProfilePage
+                _selectedIndex = 0;
               });
               ScaffoldMessenger.of(context).hideCurrentSnackBar();
             },
@@ -48,6 +82,15 @@ class _MainLayoutState extends State<MainLayout> {
         _selectedIndex = index;
       });
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // 🔄 تلقائياً يختبر الاتصال عند فتح التطبيق
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      testConnection();
+    });
   }
 
   @override

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'pages/normal_profile_page.dart';        // بدلاً من guest profile
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:login1/constants.dart';
+import 'pages/normal_profile_page.dart';
 import 'pages/awareness_page.dart';
 import 'pages/decrypt_page.dart';
 import 'pages/encrypt_page_normal.dart';
@@ -15,12 +18,31 @@ class _MainLayoutNormalState extends State<MainLayoutNormal> {
   int _selectedIndex = 3;
 
   final List<Widget> _pages = const [
-    NormalUserProfilePage(), // بدل ProfilePage
+    NormalUserProfilePage(),
     AwarenessInformationPage(),
     DecryptPage(),
-    EncryptPageNormal(), // أنشأتها سابقًا للـ Normal User
+    EncryptPageNormal(),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    checkServerConnection(); // 🔥 اختبار الاتصال عند التشغيل
+  }
+
+  Future<void> checkServerConnection() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/ping'));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        print('✅ Backend connected: ${data['message']}');
+      } else {
+        print('⚠️ Connection failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('🚫 Error connecting to backend: $e');
+    }
+  }
 
   void _onItemTapped(int index) {
     setState(() {

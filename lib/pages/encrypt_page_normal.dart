@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:login1/constants.dart';
 import 'package:login1/pages/encryption_success_page.dart';
 
 class EncryptPageNormal extends StatefulWidget {
@@ -10,9 +13,13 @@ class EncryptPageNormal extends StatefulWidget {
 
 class _EncryptPageNormalState extends State<EncryptPageNormal> {
   String? selectedEncryption;
+  final TextEditingController _textController = TextEditingController();
+  bool isLoading = false;
+  String? encryptedText;
 
   final List<String> encryptionTypes = ["AES", "RSA", "SHA-256", "Custom"];
 
+  // Options window (File - URL - Wi-Fi)
   void _showOptions() {
     showModalBottomSheet(
       context: context,
@@ -27,22 +34,18 @@ class _EncryptPageNormalState extends State<EncryptPageNormal> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading:
-                const Icon(Icons.insert_drive_file, color: Color(0xFF66C8C8)),
+                leading: const Icon(Icons.insert_drive_file, color: Color(0xFF66C8C8)),
                 title: const Text("File", style: TextStyle(color: Colors.white)),
                 onTap: () => Navigator.pop(context),
               ),
               ListTile(
-                leading:
-                const Icon(Icons.link, color: Color(0xFF66C8C8)),
+                leading: const Icon(Icons.link, color: Color(0xFF66C8C8)),
                 title: const Text("URL", style: TextStyle(color: Colors.white)),
                 onTap: () => Navigator.pop(context),
               ),
               ListTile(
-                leading:
-                const Icon(Icons.wifi, color: Color(0xFF66C8C8)),
-                title:
-                const Text("Wi-Fi", style: TextStyle(color: Colors.white)),
+                leading: const Icon(Icons.wifi, color: Color(0xFF66C8C8)),
+                title: const Text("Wi-Fi", style: TextStyle(color: Colors.white)),
                 onTap: () => Navigator.pop(context),
               ),
             ],
@@ -50,6 +53,53 @@ class _EncryptPageNormalState extends State<EncryptPageNormal> {
         );
       },
     );
+  }
+
+  // Send text to server for encryption
+  Future<void> _encryptText() async {
+    if (_textController.text.isEmpty || selectedEncryption == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter text and select encryption type')),
+      );
+      return;
+    }
+
+    setState(() => isLoading = true);
+
+    try {
+      final url = Uri.parse('$baseUrl/crypto/encrypt');
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'text': _textController.text,
+          'method': selectedEncryption,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() => encryptedText = data['encrypted']);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => EncryptionSuccessPage(
+              encryptedText: encryptedText ?? '',
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Server error: ${response.statusCode}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred: $e')),
+      );
+    } finally {
+      setState(() => isLoading = false);
+    }
   }
 
   @override
@@ -70,6 +120,7 @@ class _EncryptPageNormalState extends State<EncryptPageNormal> {
             ),
             const SizedBox(height: 40),
 
+            // Text input box
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -88,12 +139,13 @@ class _EncryptPageNormalState extends State<EncryptPageNormal> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  const TextField(
+                  TextField(
+                    controller: _textController,
                     maxLength: 200,
                     maxLines: 5,
-                    style: TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: 'Write/paste your text',
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      hintText: 'Write or paste your text here...',
                       hintStyle: TextStyle(color: Color(0xFF66C8C8)),
                       filled: true,
                       fillColor: Colors.black26,
@@ -112,11 +164,12 @@ class _EncryptPageNormalState extends State<EncryptPageNormal> {
 
             const SizedBox(height: 20),
 
+            // Encryption type dropdown
             DropdownButtonFormField<String>(
               value: selectedEncryption,
               dropdownColor: const Color(0xFF2E2E2E),
               decoration: InputDecoration(
-                labelText: "Select Encryption Type",
+                labelText: 'Select encryption type',
                 labelStyle: const TextStyle(color: Color(0xFF66C8C8)),
                 enabledBorder: OutlineInputBorder(
                   borderSide: const BorderSide(color: Color(0xFF66C8C8)),
@@ -131,8 +184,7 @@ class _EncryptPageNormalState extends State<EncryptPageNormal> {
               items: encryptionTypes
                   .map((type) => DropdownMenuItem(
                 value: type,
-                child:
-                Text(type, style: const TextStyle(color: Colors.white)),
+                child: Text(type, style: const TextStyle(color: Colors.white)),
               ))
                   .toList(),
               onChanged: (value) {
@@ -144,29 +196,22 @@ class _EncryptPageNormalState extends State<EncryptPageNormal> {
 
             const SizedBox(height: 30),
 
+            // Updated Encrypt Button (new design)
             Center(
               child: ElevatedButton.icon(
-                onPressed: () {
-                  String encryptedText = "example_encrypted_data";
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          EncryptionSuccessPage(encryptedText: encryptedText),
-                    ),
-                  );
-                },
+                onPressed: isLoading ? null : _encryptText,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2E2E2E),
                   side: const BorderSide(color: Color(0xFF66C8C8)),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  padding:
-                  const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
                 ),
                 icon: const Icon(Icons.lock, color: Color(0xFF66C8C8)),
-                label: const Text(
+                label: isLoading
+                    ? const CircularProgressIndicator(color: Color(0xFF66C8C8))
+                    : const Text(
                   'Encrypt',
                   style: TextStyle(
                     color: Color(0xFF66C8C8),

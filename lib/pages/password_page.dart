@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:login1/main_layout_normal.dart';
-import 'package:login1/pages/new_user_profile_page.dart'; // ✅ Import new profile page
+import 'package:login1/pages/new_user_profile_page.dart';
 
 class PasswordPage extends StatelessWidget {
   final String email;
@@ -8,21 +10,87 @@ class PasswordPage extends StatelessWidget {
   const PasswordPage({super.key, required this.email});
 
   bool _isNewUser(String email) {
-    // Example rule: if email ends with "new.com" → new user
-    return email.endsWith("new.com");
+    return email.endsWith("new.com"); // مثال فقط، تقدر تغيّره حسب نظامك
   }
 
   bool _isValidPassword(String password) {
-    // ✅ Must contain upper, lower, number, and symbol
     final passwordRegex =
     RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$');
     return passwordRegex.hasMatch(password);
   }
 
+  Future<void> _handleAuth(
+      BuildContext context, bool newUser, String email, String password) async {
+    try {
+      final url = Uri.parse(
+        newUser
+            ? 'https://your-backend.com/api/register' // 🟢 مسار التسجيل
+            : 'https://your-backend.com/api/login', // 🔵 مسار تسجيل الدخول
+      );
+
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'password': password}),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              newUser ? 'Account created successfully!' : 'Login successful!',
+              style: const TextStyle(color: Color(0xFF66C8C8)),
+            ),
+            backgroundColor: const Color(0xFF2E2E2E),
+          ),
+        );
+
+        if (newUser) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  NewUserProfilePage(email: email, password: password),
+            ),
+          );
+        } else {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const MainLayoutNormal()),
+                (route) => false,
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              data['message'] ?? 'Authentication failed!',
+              style: const TextStyle(color: Color(0xFF66C8C8)),
+            ),
+            backgroundColor: const Color(0xFF2E2E2E),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Error connecting to server: $e',
+            style: const TextStyle(color: Color(0xFF66C8C8)),
+          ),
+          backgroundColor: const Color(0xFF2E2E2E),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final TextEditingController passwordController = TextEditingController();
-    final TextEditingController confirmPasswordController = TextEditingController();
+    final TextEditingController confirmPasswordController =
+    TextEditingController();
     final bool newUser = _isNewUser(email);
 
     return Scaffold(
@@ -53,7 +121,6 @@ class PasswordPage extends StatelessWidget {
             ),
             const SizedBox(height: 30),
 
-            // Email field (read-only)
             TextField(
               enabled: false,
               controller: TextEditingController(text: email),
@@ -68,7 +135,6 @@ class PasswordPage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // Password field
             TextField(
               controller: passwordController,
               obscureText: true,
@@ -85,7 +151,6 @@ class PasswordPage extends StatelessWidget {
               ),
             ),
 
-            // Confirm password only for new users
             if (newUser) ...[
               const SizedBox(height: 20),
               TextField(
@@ -108,8 +173,10 @@ class PasswordPage extends StatelessWidget {
             const SizedBox(height: 30),
 
             ElevatedButton(
-              onPressed: () {
-                if (passwordController.text.isEmpty) {
+              onPressed: () async {
+                final password = passwordController.text.trim();
+
+                if (password.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text(
@@ -123,7 +190,7 @@ class PasswordPage extends StatelessWidget {
                 }
 
                 if (newUser &&
-                    passwordController.text != confirmPasswordController.text) {
+                    password != confirmPasswordController.text.trim()) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text(
@@ -136,8 +203,7 @@ class PasswordPage extends StatelessWidget {
                   return;
                 }
 
-                // ✅ Password strength validation for new users
-                if (newUser && !_isValidPassword(passwordController.text)) {
+                if (newUser && !_isValidPassword(password)) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text(
@@ -151,25 +217,7 @@ class PasswordPage extends StatelessWidget {
                   return;
                 }
 
-                if (newUser) {
-                  // Go to profile setup
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => NewUserProfilePage(
-                        email: email,
-                        password: passwordController.text,
-                      ),
-                    ),
-                  );
-                } else {
-                  // Directly login
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => const MainLayoutNormal()),
-                        (route) => false,
-                  );
-                }
+                await _handleAuth(context, newUser, email, password);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF2E2E2E),

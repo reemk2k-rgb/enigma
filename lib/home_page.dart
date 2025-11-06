@@ -1,9 +1,57 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'main_layout.dart';
 import 'pages/email_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
+
+  // ✅ دالة الاتصال بالسيرفر عند الضغط على Guest
+  Future<void> _connectAsGuest(BuildContext context) async {
+    try {
+      final response = await http.post(
+        Uri.parse('http://127.0.0.1:5000/crypto/encrypt/guest'), // غيّر IP حسب السيرفر
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'text': 'connected'}),
+      );
+
+      if (response.statusCode == 200) {
+        // ✅ الاتصال ناجح — الانتقال إلى MainLayout
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainLayout()),
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Connected as Guest'),
+            backgroundColor: Color(0xFF2E2E2E),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Connection failed (${response.statusCode})',
+              style: const TextStyle(color: Color(0xFF66C8C8)),
+            ),
+            backgroundColor: const Color(0xFF2E2E2E),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Error: $e',
+            style: const TextStyle(color: Color(0xFF66C8C8)),
+          ),
+          backgroundColor: const Color(0xFF2E2E2E),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,14 +70,8 @@ class HomePage extends StatelessWidget {
               width: 200,
               height: 50,
               child: ElevatedButton(
-                onPressed: () {
-                  // This navigates to the main app as a guest and replaces the current page,
-                  // so the user cannot go back to this home page with the back button.
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => const MainLayout()),
-                  );
-                },
+                // ✅ تم التبديل إلى الاتصال الفعلي
+                onPressed: () => _connectAsGuest(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2E2E2E),
                   side: const BorderSide(color: Color(0xFF66F0F0), width: 2),
@@ -60,8 +102,6 @@ class HomePage extends StatelessWidget {
               height: 50,
               child: ElevatedButton(
                 onPressed: () {
-                  // This navigates to the email page for a normal user login.
-                  // 'push' is used here so the user can go back to the home page if they change their mind.
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const EmailPage()),
@@ -79,7 +119,8 @@ class HomePage extends StatelessWidget {
                   style: TextStyle(
                     color: Color(0xFF66C8C8),
                     fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.
+                    bold,
                     shadows: [
                       Shadow(
                         color: Color(0xFF66F0F0),
