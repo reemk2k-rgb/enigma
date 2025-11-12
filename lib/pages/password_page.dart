@@ -1,42 +1,107 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:login1/main_layout_normal.dart';
-import 'package:login1/pages/new_user_profile_page.dart';
+import 'package:login1/pages/forgot_password_page.dart';
 
-class PasswordPage extends StatelessWidget {
+class PasswordPage extends StatefulWidget {
   final String email;
 
   const PasswordPage({super.key, required this.email});
 
-  bool _isNewUser(String email) {
-    return email.endsWith("new.com"); // مثال فقط، تقدر تغيّره حسب نظامك
+  @override
+  State<PasswordPage> createState() => _PasswordPageState();
+}
+
+class _PasswordPageState extends State<PasswordPage> {
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController ageController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
+  String selectedGender = 'Female';
+
+  final storage = const FlutterSecureStorage();
+
+  bool? isNewUser;
+  bool loading = true;
+
+  // ✅ التحقق من الإيميل فقط (بدون تسجيل دخول)
+  Future<void> _checkUserStatus() async {
+    try {
+      final url = Uri.parse('https://enigma-09np.onrender.com/auth/check-email');
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({"email": widget.email}),
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          isNewUser = false; // المستخدم موجود فعلاً
+          loading = false;
+        });
+      } else if (response.statusCode == 404) {
+        setState(() {
+          isNewUser = true; // مستخدم جديد
+          loading = false;
+        });
+      } else {
+        setState(() {
+          isNewUser = true;
+          loading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        isNewUser = true;
+        loading = false;
+      });
+    }
   }
 
   bool _isValidPassword(String password) {
-    final passwordRegex =
-    RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$');
+    final passwordRegex = RegExp(
+        r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$');
     return passwordRegex.hasMatch(password);
   }
 
   Future<void> _handleAuth(
-      BuildContext context, bool newUser, String email, String password) async {
+      BuildContext context, bool newUser, String email, String password, String? confirmPassword) async {
     try {
       final url = Uri.parse(
         newUser
-            ? 'https://your-backend.com/api/register' // 🟢 مسار التسجيل
-            : 'https://your-backend.com/api/login', // 🔵 مسار تسجيل الدخول
+            ? 'https://enigma-09np.onrender.com/auth/register'
+            : 'https://enigma-09np.onrender.com/auth/login',
       );
+
+      final Map<String, dynamic> body = {
+        "email": email,
+        "password": password,
+      };
+
+      if (newUser) {
+        body["confirm_password"] = confirmPassword ?? "";
+        body["name"] = nameController.text.trim();
+        body["age"] = ageController.text.trim();
+        body["phone"] = phoneController.text.trim();
+        body["gender"] = selectedGender;
+      }
 
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
+        body: jsonEncode(body),
       );
 
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        if (data["token"] != null) {
+          await storage.write(key: 'jwt', value: data["token"]);
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -47,26 +112,16 @@ class PasswordPage extends StatelessWidget {
           ),
         );
 
-        if (newUser) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) =>
-                  NewUserProfilePage(email: email, password: password),
-            ),
-          );
-        } else {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const MainLayoutNormal()),
-                (route) => false,
-          );
-        }
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const MainLayoutNormal()),
+              (route) => false,
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              data['message'] ?? 'Authentication failed!',
+              data['error'] ?? data['message'] ?? 'Authentication failed!',
               style: const TextStyle(color: Color(0xFF66C8C8)),
             ),
             backgroundColor: const Color(0xFF2E2E2E),
@@ -74,6 +129,7 @@ class PasswordPage extends StatelessWidget {
         );
       }
     } catch (e) {
+      // ✅ تم إصلاح الخطأ المطبعي هنا
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -87,11 +143,23 @@ class PasswordPage extends StatelessWidget {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _checkUserStatus();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final TextEditingController passwordController = TextEditingController();
-    final TextEditingController confirmPasswordController =
-    TextEditingController();
-    final bool newUser = _isNewUser(email);
+    if (loading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF2E2E2E),
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFF66C8C8)),
+        ),
+      );
+    }
+
+    final bool newUser = isNewUser ?? true;
 
     return Scaffold(
       backgroundColor: const Color(0xFF2E2E2E),
@@ -105,135 +173,218 @@ class PasswordPage extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              newUser
-                  ? "Hi, New Friend 👋\nLet's set up your password!"
-                  : "Welcome Back 👋\nEnter your password",
-              style: const TextStyle(
-                color: Color(0xFF66C8C8),
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                newUser
+                    ? "Hi, New Friend 👋\nLet's create your account!"
+                    : "Welcome Back 👋\nEnter your password",
+                style: const TextStyle(
+                  color: Color(0xFF66C8C8),
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 30),
+              const SizedBox(height: 30),
 
-            TextField(
-              enabled: false,
-              controller: TextEditingController(text: email),
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                labelText: "Email",
-                labelStyle: TextStyle(color: Color(0xFF66C8C8)),
-                filled: true,
-                fillColor: Colors.black26,
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            TextField(
-              controller: passwordController,
-              obscureText: true,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                hintText: "Enter your password",
-                hintStyle: TextStyle(color: Color(0xFF66C8C8)),
-                filled: true,
-                fillColor: Colors.black26,
-                border: OutlineInputBorder(),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF66C8C8)),
+              // Email field
+              TextField(
+                enabled: false,
+                controller: TextEditingController(text: widget.email),
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: "Email",
+                  labelStyle: TextStyle(color: Color(0xFF66C8C8)),
+                  filled: true,
+                  fillColor: Colors.black26,
+                  border: OutlineInputBorder(),
                 ),
               ),
-            ),
 
-            if (newUser) ...[
               const SizedBox(height: 20),
+
+              if (newUser) ...[
+                TextField(
+                  controller: nameController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    hintText: "Enter your name",
+                    hintStyle: TextStyle(color: Color(0xFF66C8C8)),
+                    filled: true,
+                    fillColor: Colors.black26,
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                TextField(
+                  controller: ageController,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    hintText: "Enter your age",
+                    hintStyle: TextStyle(color: Color(0xFF66C8C8)),
+                    filled: true,
+                    fillColor: Colors.black26,
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                TextField(
+                  controller: phoneController,
+                  keyboardType: TextInputType.phone,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    hintText: "Enter your phone number",
+                    hintStyle: TextStyle(color: Color(0xFF66C8C8)),
+                    filled: true,
+                    fillColor: Colors.black26,
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                DropdownButtonFormField<String>(
+                  value: selectedGender,
+                  dropdownColor: const Color(0xFF2E2E2E),
+                  decoration: const InputDecoration(
+                    labelText: "Select Gender",
+                    labelStyle: TextStyle(color: Color(0xFF66C8C8)),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xFF66C8C8)),
+                    ),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: "Female",
+                      child: Text("Female", style: TextStyle(color: Colors.white)),
+                    ),
+                    DropdownMenuItem(
+                      value: "Male",
+                      child: Text("Male", style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                  onChanged: (value) => setState(() => selectedGender = value!),
+                ),
+                const SizedBox(height: 20),
+              ],
+
+              // Password fields
               TextField(
-                controller: confirmPasswordController,
+                controller: passwordController,
                 obscureText: true,
                 style: const TextStyle(color: Colors.white),
                 decoration: const InputDecoration(
-                  hintText: "Confirm password",
+                  hintText: "Enter your password",
                   hintStyle: TextStyle(color: Color(0xFF66C8C8)),
                   filled: true,
                   fillColor: Colors.black26,
                   border: OutlineInputBorder(),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Color(0xFF66C8C8)),
+                ),
+              ),
+
+              if (newUser) ...[
+                const SizedBox(height: 20),
+                TextField(
+                  controller: confirmPasswordController,
+                  obscureText: true,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    hintText: "Confirm your password",
+                    hintStyle: TextStyle(color: Color(0xFF66C8C8)),
+                    filled: true,
+                    fillColor: Colors.black26,
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+
+              if (!newUser) ...[
+                const SizedBox(height: 10),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ForgotPasswordPage()),
+                    );
+                  },
+                  child: const Text(
+                    "Forgot Password?",
+                    style: TextStyle(color: Color(0xFF66C8C8)),
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 30),
+
+              ElevatedButton(
+                onPressed: () async {
+                  final password = passwordController.text.trim();
+                  final confirmPassword = confirmPasswordController.text.trim();
+
+                  if (password.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Please enter a password.',
+                          style: TextStyle(color: Color(0xFF66C8C8)),
+                        ),
+                        backgroundColor: Color(0xFF2E2E2E),
+                      ),
+                    );
+                    return;
+                  }
+
+                  if (newUser && password != confirmPassword) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Passwords do not match.',
+                          style: TextStyle(color: Color(0xFF66C8C8)),
+                        ),
+                        backgroundColor: Color(0xFF2E2E2E),
+                      ),
+                    );
+                    return;
+                  }
+
+                  if (newUser && !_isValidPassword(password)) {
+                    ScaffoldMessenger.of(context).
+                    showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Password must contain:\n• At least 8 characters\n• Uppercase and lowercase letters\n• A number\n• A special symbol',
+                          style: TextStyle(color: Color(0xFF66C8C8)),
+                        ),
+                        backgroundColor: Color(0xFF2E2E2E),
+                        duration: Duration(seconds: 5),
+                      ),
+                    );
+                    return;
+                  }
+
+                  await _handleAuth(context, newUser, widget.email, password, confirmPassword);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2E2E2E),
+                  side: const BorderSide(color: Color(0xFF66C8C8)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: Text(
+                  newUser ? "Create Account" : "Login",
+                  style: const TextStyle(
+                    color: Color(0xFF66C8C8),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ],
-
-            const SizedBox(height: 30),
-
-            ElevatedButton(
-              onPressed: () async {
-                final password = passwordController.text.trim();
-
-                if (password.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Please enter a password.',
-                        style: TextStyle(color: Color(0xFF66C8C8)),
-                      ),
-                      backgroundColor: Color(0xFF2E2E2E),
-                    ),
-                  );
-                  return;
-                }
-
-                if (newUser &&
-                    password != confirmPasswordController.text.trim()) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Passwords do not match.',
-                        style: TextStyle(color: Color(0xFF66C8C8)),
-                      ),
-                      backgroundColor: Color(0xFF2E2E2E),
-                    ),
-                  );
-                  return;
-                }
-
-                if (newUser && !_isValidPassword(password)) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Password must contain:\n• At least 8 characters\n• Uppercase and lowercase letters\n• A number\n• A special symbol',
-                        style: TextStyle(color: Color(0xFF66C8C8)),
-                      ),
-                      backgroundColor: Color(0xFF2E2E2E),
-                      duration: Duration(seconds: 5),
-                    ),
-                  );
-                  return;
-                }
-
-                await _handleAuth(context, newUser, email, password);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2E2E2E),
-                side: const BorderSide(color: Color(0xFF66C8C8)),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-              child: Text(
-                newUser ? "Create Account" : "Login",
-                style: const TextStyle(
-                  color: Color(0xFF66C8C8),
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

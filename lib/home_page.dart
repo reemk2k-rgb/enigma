@@ -11,7 +11,7 @@ class HomePage extends StatelessWidget {
   Future<void> _connectAsGuest(BuildContext context) async {
     try {
       final response = await http.post(
-        Uri.parse('http://127.0.0.1:5000/crypto/encrypt/guest'), // غيّر IP حسب السيرفر
+        Uri.parse('https://enigma-09np.onrender.com/crypto/encrypt/guest'), // ✅ رابط السيرفر الثابت
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'text': 'connected'}),
       );
@@ -119,8 +119,7 @@ class HomePage extends StatelessWidget {
                   style: TextStyle(
                     color: Color(0xFF66C8C8),
                     fontSize: 18,
-                    fontWeight: FontWeight.
-                    bold,
+                    fontWeight: FontWeight.bold,
                     shadows: [
                       Shadow(
                         color: Color(0xFF66F0F0),

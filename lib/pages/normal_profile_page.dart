@@ -4,8 +4,8 @@ import 'dart:convert';
 import 'profile_details_page.dart';
 import 'privacy_policy_page.dart';
 import 'terms_and_conditions_page.dart';
-import '../main_layout.dart';
-import '../constants.dart'; // ← لازم يكون فيه baseUrl
+import '../main_layout_normal.dart';
+import '../constants.dart'; // ← فيه baseUrl
 
 class NormalUserProfilePage extends StatelessWidget {
   const NormalUserProfilePage({super.key});
@@ -130,14 +130,15 @@ class NormalUserProfilePage extends StatelessWidget {
   // 🔻 دالة الربط مع الـ backend لتسجيل الخروج
   Future<void> _logoutFromBackend(BuildContext context) async {
     try {
-      final url = Uri.parse('$baseUrl/auth/logout'); // endpoint backend
+      // ✅ استخدمنا الرابط الثابت من Render
+      final url = Uri.parse('${baseUrl}auth/logout');
       final response = await http.post(url);
 
       if (response.statusCode == 200) {
-        // لو نجح تسجيل الخروج
+        // ✅ نجح تسجيل الخروج
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => const MainLayout()),
+          MaterialPageRoute(builder: (context) => const MainLayoutNormal()),
               (route) => false,
         );
 

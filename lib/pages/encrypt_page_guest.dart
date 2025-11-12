@@ -19,7 +19,7 @@ class _GuestPageState extends State<GuestPage> {
   Future<void> _encryptText() async {
     final text = _textController.text.trim();
 
-    // Check for empty input
+    // ✅ التحقق من أن النص غير فارغ
     if (text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -30,7 +30,7 @@ class _GuestPageState extends State<GuestPage> {
       return;
     }
 
-    // Check word limit (max 100 words)
+    // ✅ التحقق من عدد الكلمات (الحد الأقصى 100 كلمة)
     final wordCount = text.split(RegExp(r'\s+')).length;
     if (wordCount > 100) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -42,7 +42,7 @@ class _GuestPageState extends State<GuestPage> {
       return;
     }
 
-    // Check remaining attempts
+    // ✅ التحقق من عدد المحاولات المتبقية
     if (attemptsLeft <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -53,12 +53,12 @@ class _GuestPageState extends State<GuestPage> {
       return;
     }
 
-    setState(() {
-      isLoading = true;
-    });
+    setState(() => isLoading = true);
 
     try {
-      final url = Uri.parse('$baseUrl/crypto/encrypt/guest');
+      // ✅ هنا الربط الصحيح مع السيرفر في Render
+      final url = Uri.parse('${baseUrl}crypto/encrypt/guest');
+
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -71,9 +71,7 @@ class _GuestPageState extends State<GuestPage> {
         if (data['success'] == true) {
           final encryptedText = data['encrypted_text'];
 
-          setState(() {
-            attemptsLeft -= 1;
-          });
+          setState(() => attemptsLeft -= 1);
 
           Navigator.push(
             context,
@@ -107,9 +105,7 @@ class _GuestPageState extends State<GuestPage> {
         ),
       );
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
     }
   }
 
@@ -133,7 +129,7 @@ class _GuestPageState extends State<GuestPage> {
 
             TextField(
               controller: _textController,
-              maxLength: 500, // still can paste large but we count words
+              maxLength: 500, // يمكن لصق نص كبير لكن يتم حساب الكلمات
               maxLines: 5,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(

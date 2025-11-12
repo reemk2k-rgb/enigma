@@ -31,23 +31,18 @@ class _DecryptPageState extends State<DecryptPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading:
-                const Icon(Icons.insert_drive_file, color: Color(0xFF66C8C8)),
-                title:
-                const Text("File", style: TextStyle(color: Colors.white)),
+                leading: const Icon(Icons.insert_drive_file, color: Color(0xFF66C8C8)),
+                title: const Text("File", style: TextStyle(color: Colors.white)),
                 onTap: () => Navigator.pop(context),
               ),
               ListTile(
-                leading:
-                const Icon(Icons.link, color: Color(0xFF66C8C8)),
+                leading: const Icon(Icons.link, color: Color(0xFF66C8C8)),
                 title: const Text("URL", style: TextStyle(color: Colors.white)),
                 onTap: () => Navigator.pop(context),
               ),
               ListTile(
-                leading:
-                const Icon(Icons.wifi, color: Color(0xFF66C8C8)),
-                title:
-                const Text("Wi-Fi", style: TextStyle(color: Colors.white)),
+                leading: const Icon(Icons.wifi, color: Color(0xFF66C8C8)),
+                title: const Text("Wi-Fi", style: TextStyle(color: Colors.white)),
                 onTap: () => Navigator.pop(context),
               ),
             ],
@@ -71,7 +66,9 @@ class _DecryptPageState extends State<DecryptPage> {
     setState(() => isLoading = true);
 
     try {
-      final url = Uri.parse('$baseUrl/crypto/decrypt');
+      // ✅ ربط حقيقي مع السيرفر في Render
+      final url = Uri.parse('${baseUrl}crypto/decrypt');
+
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -79,7 +76,7 @@ class _DecryptPageState extends State<DecryptPage> {
           'data_type': 'text',
           'encrypted': textController.text,
           'key_b64': keyController.text,
-          'algorithm': 'AES', // Temporarily until we add encryption type selection
+          'algorithm': 'AES', // مؤقت إلى أن تضيفي اختيار الخوارزمية لاحقاً
         }),
       );
 
@@ -89,23 +86,33 @@ class _DecryptPageState extends State<DecryptPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) =>
-                  DecryptionSuccessPage(decryptedText: data['decrypted']),
+              builder: (context) => DecryptionSuccessPage(
+                decryptedText: data['decrypted'],
+              ),
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: ${data['error'] ?? 'Decryption failed'}')),
+            SnackBar(
+              content: Text('Error: ${data['error'] ?? 'Decryption failed'}'),
+              backgroundColor: Colors.redAccent,
+            ),
           );
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to connect to server (${response.statusCode})')),
+          SnackBar(
+            content: Text('Server error (${response.statusCode})'),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('An error occurred during connection: $e')),
+        SnackBar(
+          content: Text('Connection error: $e'),
+          backgroundColor: Colors.redAccent,
+        ),
       );
     } finally {
       setState(() => isLoading = false);
@@ -130,6 +137,7 @@ class _DecryptPageState extends State<DecryptPage> {
             ),
             const SizedBox(height: 40),
 
+            // 🔐 صندوق النص المشفر
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -182,6 +190,7 @@ class _DecryptPageState extends State<DecryptPage> {
               ),
             ),
             const SizedBox(height: 8),
+
             TextField(
               controller: keyController,
               obscureText: true,
@@ -218,8 +227,7 @@ class _DecryptPageState extends State<DecryptPage> {
                   padding: const EdgeInsets.symmetric(
                       vertical: 12, horizontal: 24),
                 ),
-                icon:
-                const Icon(Icons.lock_open, color: Color(0xFF66C8C8)),
+                icon: const Icon(Icons.lock_open, color: Color(0xFF66C8C8)),
                 label: const Text(
                   'Decrypt',
                   style: TextStyle(

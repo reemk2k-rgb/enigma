@@ -32,7 +32,7 @@ class _MainLayoutNormalState extends State<MainLayoutNormal> {
 
   Future<void> checkServerConnection() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/ping'));
+      final response = await http.get(Uri.parse('${baseUrl}ping')); // ✅ الرابط الصحيح
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         print('✅ Backend connected: ${data['message']}');

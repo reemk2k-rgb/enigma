@@ -24,12 +24,13 @@ class _MainLayoutState extends State<MainLayout> {
     GuestPage(),
   ];
 
-  final String baseUrl = "https://YOUR_NGROK_LINK.ngrok.io"; // 🔗 ضعي رابط ngrok هنا
+  // ✅ رابط السيرفر الثابت (Render)
+  final String baseUrl = "https://enigma-09np.onrender.com/";
 
   // 🛰️ اختبار الاتصال بالسيرفر (backend)
   Future<void> testConnection() async {
     try {
-      final response = await http.get(Uri.parse("$baseUrl/ping"));
+      final response = await http.get(Uri.parse("${baseUrl}ping"));
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
