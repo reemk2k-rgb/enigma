@@ -5,7 +5,8 @@ import 'profile_details_page.dart';
 import 'privacy_policy_page.dart';
 import 'terms_and_conditions_page.dart';
 import '../main_layout_normal.dart';
-import '../constants.dart'; // ← فيه baseUrl
+import '../constants.dart';
+import 'package:login1/main_layout.dart';
 
 class NormalUserProfilePage extends StatelessWidget {
   const NormalUserProfilePage({super.key});
@@ -17,6 +18,7 @@ class NormalUserProfilePage extends StatelessWidget {
       body: Column(
         children: [
           const SizedBox(height: 100),
+
           _buildOption(
             context,
             icon: Icons.person_outline,
@@ -24,11 +26,15 @@ class NormalUserProfilePage extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const ProfileDetailsPage()),
+                MaterialPageRoute(
+                  builder: (context) => const ProfileDetailsPage(),
+                ),
               );
             },
           ),
+
           const Divider(color: Color(0xFF66C8C8)),
+
           _buildOption(
             context,
             icon: Icons.lock_outline,
@@ -36,11 +42,15 @@ class NormalUserProfilePage extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const PrivacyPolicyPage()),
+                MaterialPageRoute(
+                  builder: (context) => const PrivacyPolicyPage(),
+                ),
               );
             },
           ),
+
           const Divider(color: Color(0xFF66C8C8)),
+
           _buildOption(
             context,
             icon: Icons.description,
@@ -48,11 +58,15 @@ class NormalUserProfilePage extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const TermsAndConditionsPage()),
+                MaterialPageRoute(
+                  builder: (context) => const TermsAndConditionsPage(),
+                ),
               );
             },
           ),
+
           const Divider(color: Color(0xFF66C8C8)),
+
           _buildOption(
             context,
             icon: Icons.logout,
@@ -61,14 +75,19 @@ class NormalUserProfilePage extends StatelessWidget {
               _showLogoutConfirmation(context);
             },
           ),
+
           const Divider(color: Color(0xFF66C8C8)),
         ],
       ),
     );
   }
 
-  Widget _buildOption(BuildContext context,
-      {required IconData icon, required String text, required VoidCallback onTap}) {
+  Widget _buildOption(
+      BuildContext context, {
+        required IconData icon,
+        required String text,
+        required VoidCallback onTap,
+      }) {
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -85,14 +104,15 @@ class NormalUserProfilePage extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            const Icon(Icons.arrow_forward_ios, color: Color(0xFF66C8C8), size: 16),
+            const Icon(Icons.arrow_forward_ios,
+                color: Color(0xFF66C8C8), size: 16),
           ],
         ),
       ),
     );
   }
 
-  // 🔻 نافذة تأكيد قبل تسجيل الخروج
+  // نافذة تأكيد تسجيل الخروج
   void _showLogoutConfirmation(BuildContext context) {
     showDialog(
       context: context,
@@ -109,13 +129,15 @@ class NormalUserProfilePage extends StatelessWidget {
           ),
           actions: [
             TextButton(
-              child: const Text('Cancel', style: TextStyle(color: Color(0xFF66C8C8))),
+              child: const Text('Cancel',
+                  style: TextStyle(color: Color(0xFF66C8C8))),
               onPressed: () {
                 Navigator.of(dialogContext).pop();
               },
             ),
             TextButton(
-              child: const Text('Logout', style: TextStyle(color: Colors.redAccent)),
+              child: const Text('Logout',
+                  style: TextStyle(color: Colors.redAccent)),
               onPressed: () async {
                 Navigator.of(dialogContext).pop();
                 await _logoutFromBackend(context);
@@ -127,42 +149,27 @@ class NormalUserProfilePage extends StatelessWidget {
     );
   }
 
-  // 🔻 دالة الربط مع الـ backend لتسجيل الخروج
   Future<void> _logoutFromBackend(BuildContext context) async {
     try {
-      // ✅ استخدمنا الرابط الثابت من Render
       final url = Uri.parse('${baseUrl}auth/logout');
-      final response = await http.post(url);
+      await http.post(url);
 
-      if (response.statusCode == 200) {
-        // ✅ نجح تسجيل الخروج
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const MainLayoutNormal()),
-              (route) => false,
-        );
+      // رجوع لصفحة القيست
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const MainLayout()),
+            (route) => false,
+      );
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Logged out successfully',
-              style: TextStyle(color: Color(0xFF66C8C8)),
-            ),
-            backgroundColor: Color(0xFF2E2E2E),
-            duration: Duration(seconds: 2),
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Logged out successfully',
+            style: TextStyle(color: Color(0xFF66C8C8)),
           ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Server error: ${response.statusCode}',
-              style: const TextStyle(color: Colors.white),
-            ),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
+          backgroundColor: Color(0xFF2E2E2E),
+        ),
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

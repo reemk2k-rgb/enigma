@@ -1,23 +1,41 @@
-import 'package:flutter/material.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:flutter/services.dart';
 import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class DecryptionSuccessPage extends StatelessWidget {
-  final String decryptedText;
+  final String? decryptedText; // نص فقط
+  final String? filePath; // ملف PDF
 
-  const DecryptionSuccessPage({super.key, required this.decryptedText});
+  const DecryptionSuccessPage({
+    super.key,
+    this.decryptedText,
+    this.filePath,
+  });
 
-  Future<void> _downloadText(BuildContext context) async {
+  Future<void> _downloadFile(BuildContext context) async {
     try {
-      final directory = await getApplicationDocumentsDirectory();
-      final file = File("${directory.path}/decrypted_text.txt");
-      await file.writeAsString(decryptedText);
+      if (decryptedText != null) {
+        // حفظ النص في ملف
+        final directory = await getApplicationDocumentsDirectory();
+        final file = File("${directory.path}/decrypted_text.txt");
+        await file.writeAsString(decryptedText!);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("File saved at: ${file.path}")),
-      );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("File saved at: ${file.path}")),
+        );
+      } else if (filePath != null) {
+        // نسخ ملف PDF إلى مجلد التطبيق
+        final original = File(filePath!);
+        final directory = await getApplicationDocumentsDirectory();
+        final newFile = File("${directory.path}/decrypted_file.pdf");
+        await original.copy(newFile.path);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("PDF saved at: ${newFile.path}")),
+        );
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Failed to save file")),
@@ -26,10 +44,22 @@ class DecryptionSuccessPage extends StatelessWidget {
   }
 
   Future<void> _copyToClipboard(BuildContext context) async {
-    await Clipboard.setData(ClipboardData(text: decryptedText));
+    if (decryptedText != null) {
+      await Clipboard.setData(ClipboardData(text: decryptedText!));
+    } else if (filePath != null) {
+      await Clipboard.setData(ClipboardData(text: filePath!));
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Copied to Clipboard")),
     );
+  }
+
+  void _shareContent() {
+    if (decryptedText != null) {
+      Share.share(decryptedText!);
+    } else if (filePath != null) {
+      Share.shareXFiles([XFile(filePath!)]);
+    }
   }
 
   @override
@@ -44,73 +74,100 @@ class DecryptionSuccessPage extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Icon(Icons.check_circle, color: Color(0xFF66C8C8), size: 80),
-              const SizedBox(height: 20),
-              const Text(
-                "Decryption Successful!",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Color(0xFF66C8C8),
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                const Icon(Icons.check_circle,
+                    color: Color(0xFF66C8C8), size: 80),
+                const SizedBox(height: 20),
+                const Text(
+                  "Decryption Successful!",
+                  style: TextStyle(
+                    color: Color(0xFF66C8C8),
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Color(0xFF66C8C8)),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: SelectableText(
-                  decryptedText,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white),
-                ),
-              ),
-              const SizedBox(height: 30),
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 20,
-                runSpacing: 10,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: () => Share.share(decryptedText),
-                    icon: const Icon(Icons.share, color: Color(0xFF66C8C8)),
-                    label: const Text("Share"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2E2E2E),
-                      side: const BorderSide(color: Color(0xFF66C8C8)),
+                const SizedBox(height: 30),
+
+                if (decryptedText != null)
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Color(0xFF66C8C8)),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: SelectableText(
+                      decryptedText!,
+                      style: const TextStyle(color: Colors.white),
+                      textAlign: TextAlign.center,
                     ),
                   ),
-                  ElevatedButton.icon(
-                    onPressed: () => _downloadText(context),
-                    icon: const Icon(Icons.download, color: Color(0xFF66C8C8)),
-                    label: const Text("Download"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2E2E2E),
-                      side: const BorderSide(color: Color(0xFF66C8C8)),
-                    ),
+
+                if (filePath != null)
+                  Column(
+                    children: [
+                      const Text(
+                        "Saved File:",
+                        style: TextStyle(
+                          color: Color(0xFF66C8C8),
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        filePath!,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
-                  ElevatedButton.icon(
-                    onPressed: () => _copyToClipboard(context),
-                    icon: const Icon(Icons.copy, color: Color(0xFF66C8C8)),
-                    label: const Text("Copy"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2E2E2E),
-                      side: const BorderSide(color: Color(0xFF66C8C8)),
+
+                const SizedBox(height: 30),
+
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 20,
+                  runSpacing: 10,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: _shareContent,
+                      icon: const Icon(Icons.share, color: Color(0xFF66C8C8)),
+                      label: const Text("Share"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2E2E2E),
+                        side: const BorderSide(color: Color(0xFF66C8C8)),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                    ElevatedButton.icon(
+                      onPressed: () => _downloadFile(context),
+                      icon:
+                      const Icon(Icons.download, color: Color(0xFF66C8C8)),
+                      label: const Text("Download"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2E2E2E),
+                        side: const BorderSide(color: Color(0xFF66C8C8)),
+                      ),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () => _copyToClipboard(context),
+                      icon: const Icon(Icons.copy, color: Color(0xFF66C8C8)),
+                      label: const Text("Copy"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2E2E2E),
+                        side: const BorderSide(color: Color(0xFF66C8C8)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

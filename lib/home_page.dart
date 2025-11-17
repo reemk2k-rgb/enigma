@@ -7,17 +7,15 @@ import 'pages/email_page.dart';
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
-  // ✅ دالة الاتصال بالسيرفر عند الضغط على Guest
+  // ✅ دالة Guest — تتصل فقط على /ping
   Future<void> _connectAsGuest(BuildContext context) async {
     try {
-      final response = await http.post(
-        Uri.parse('https://enigma-09np.onrender.com/crypto/encrypt/guest'), // ✅ رابط السيرفر الثابت
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'text': 'connected'}),
+      final response = await http.get(
+        Uri.parse('https://enigma-09np.onrender.com/ping'),
       );
 
       if (response.statusCode == 200) {
-        // ✅ الاتصال ناجح — الانتقال إلى MainLayout
+        // 🔥 نجاح الاتصال — أدخلي القيست
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const MainLayout()),
@@ -25,11 +23,15 @@ class HomePage extends StatelessWidget {
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Connected as Guest'),
+            content: Text(
+              'Connected as Guest',
+              style: TextStyle(color: Color(0xFF66C8C8)),
+            ),
             backgroundColor: Color(0xFF2E2E2E),
           ),
         );
       } else {
+        // ❌ السيرفر رد بخطأ
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -41,6 +43,7 @@ class HomePage extends StatelessWidget {
         );
       }
     } catch (e) {
+      // ❌ ما قدر يتصل نهائياً
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -66,11 +69,14 @@ class HomePage extends StatelessWidget {
               width: 200,
             ),
             const SizedBox(height: 40),
+
+            // ====================================================
+            // 🔵 زر Guest بعد الإصلاح
+            // ====================================================
             SizedBox(
               width: 200,
               height: 50,
               child: ElevatedButton(
-                // ✅ تم التبديل إلى الاتصال الفعلي
                 onPressed: () => _connectAsGuest(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2E2E2E),
@@ -97,6 +103,10 @@ class HomePage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
+
+            // ====================================================
+            // 🔵 زر Normal User
+            // ====================================================
             SizedBox(
               width: 200,
               height: 50,

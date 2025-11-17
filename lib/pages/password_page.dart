@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // ⭐ تمت الإضافة
 import 'package:login1/main_layout_normal.dart';
 import 'package:login1/pages/forgot_password_page.dart';
 
@@ -27,7 +28,6 @@ class _PasswordPageState extends State<PasswordPage> {
   bool? isNewUser;
   bool loading = true;
 
-  // ✅ التحقق من الإيميل فقط (بدون تسجيل دخول)
   Future<void> _checkUserStatus() async {
     try {
       final url = Uri.parse('https://enigma-09np.onrender.com/auth/check-email');
@@ -39,12 +39,12 @@ class _PasswordPageState extends State<PasswordPage> {
 
       if (response.statusCode == 200) {
         setState(() {
-          isNewUser = false; // المستخدم موجود فعلاً
+          isNewUser = false;
           loading = false;
         });
       } else if (response.statusCode == 404) {
         setState(() {
-          isNewUser = true; // مستخدم جديد
+          isNewUser = true;
           loading = false;
         });
       } else {
@@ -85,7 +85,9 @@ class _PasswordPageState extends State<PasswordPage> {
         body["confirm_password"] = confirmPassword ?? "";
         body["name"] = nameController.text.trim();
         body["age"] = ageController.text.trim();
-        body["phone"] = phoneController.text.trim();
+
+        final phone = "0${phoneController.text.trim()}";
+        body["phone"] = phone;
         body["gender"] = selectedGender;
       }
 
@@ -99,7 +101,11 @@ class _PasswordPageState extends State<PasswordPage> {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (data["token"] != null) {
+          // ⭐ توحيد حفظ التوكن في SecureStorage + SharedPreferences
           await storage.write(key: 'jwt', value: data["token"]);
+
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('token', data["token"]);
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -129,7 +135,6 @@ class _PasswordPageState extends State<PasswordPage> {
         );
       }
     } catch (e) {
-      // ✅ تم إصلاح الخطأ المطبعي هنا
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -190,7 +195,6 @@ class _PasswordPageState extends State<PasswordPage> {
               ),
               const SizedBox(height: 30),
 
-              // Email field
               TextField(
                 enabled: false,
                 controller: TextEditingController(text: widget.email),
@@ -236,15 +240,34 @@ class _PasswordPageState extends State<PasswordPage> {
 
                 TextField(
                   controller: phoneController,
-                  keyboardType: TextInputType.phone,
+                  keyboardType: TextInputType.number,
+                  maxLength: 9,
                   style: const TextStyle(color: Colors.white),
                   decoration: const InputDecoration(
-                    hintText: "Enter your phone number",
+                    prefixText: "+966 ",
+                    prefixStyle: TextStyle(color: Color(0xFF66C8C8)),
+                    counterText: "",
+                    hintText: "5XXXXXXXX",
                     hintStyle: TextStyle(color: Color(0xFF66C8C8)),
                     filled: true,
                     fillColor: Colors.black26,
                     border: OutlineInputBorder(),
                   ),
+                  onChanged: (value) {
+                    if (value.startsWith('0')) {
+                      phoneController.text = value.substring(1);
+                      phoneController.selection = TextSelection.fromPosition(
+                        TextPosition(offset: phoneController.text.length),
+                      );
+                    }
+
+                    phoneController.text =
+                        phoneController.text.replaceAll(RegExp(r'[^0-9]'), '');
+
+                    phoneController.selection = TextSelection.fromPosition(
+                      TextPosition(offset: phoneController.text.length),
+                    );
+                  },
                 ),
                 const SizedBox(height: 20),
 
@@ -261,11 +284,13 @@ class _PasswordPageState extends State<PasswordPage> {
                   items: const [
                     DropdownMenuItem(
                       value: "Female",
-                      child: Text("Female", style: TextStyle(color: Colors.white)),
+                      child:
+                      Text("Female", style: TextStyle(color: Colors.white)),
                     ),
                     DropdownMenuItem(
                       value: "Male",
-                      child: Text("Male", style: TextStyle(color: Colors.white)),
+                      child:
+                      Text("Male", style: TextStyle(color: Colors.white)),
                     ),
                   ],
                   onChanged: (value) => setState(() => selectedGender = value!),
@@ -273,7 +298,6 @@ class _PasswordPageState extends State<PasswordPage> {
                 const SizedBox(height: 20),
               ],
 
-              // Password fields
               TextField(
                 controller: passwordController,
                 obscureText: true,
@@ -309,7 +333,8 @@ class _PasswordPageState extends State<PasswordPage> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const ForgotPasswordPage()),
+                      MaterialPageRoute(
+                          builder: (context) => const ForgotPasswordPage()),
                     );
                   },
                   child: const Text(
@@ -353,8 +378,7 @@ class _PasswordPageState extends State<PasswordPage> {
                   }
 
                   if (newUser && !_isValidPassword(password)) {
-                    ScaffoldMessenger.of(context).
-                    showSnackBar(
+                    ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
                           'Password must contain:\n• At least 8 characters\n• Uppercase and lowercase letters\n• A number\n• A special symbol',
@@ -367,7 +391,26 @@ class _PasswordPageState extends State<PasswordPage> {
                     return;
                   }
 
-                  await _handleAuth(context, newUser, widget.email, password, confirmPassword);
+                  if (newUser) {
+                    final phoneInput = phoneController.text.trim();
+
+                    if (phoneInput.length != 9 ||
+                        !RegExp(r'^[0-9]+$').hasMatch(phoneInput)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Phone number must be 9 digits after +966.',
+                            style: TextStyle(color: Color(0xFF66C8C8)),
+                          ),
+                          backgroundColor: Color(0xFF2E2E2E),
+                        ),
+                      );
+                      return;
+                    }
+                  }
+
+                  await _handleAuth(
+                      context, newUser, widget.email, password, confirmPassword);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2E2E2E),

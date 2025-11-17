@@ -6,8 +6,15 @@ import 'dart:io';
 
 class EncryptionSuccessPage extends StatelessWidget {
   final String encryptedText;
+  final String encryptionKey;
+  final String algorithm;
 
-  const EncryptionSuccessPage({super.key, required this.encryptedText});
+  const EncryptionSuccessPage({
+    super.key,
+    required this.encryptedText,
+    required this.encryptionKey,
+    required this.algorithm,
+  });
 
   Future<void> _downloadText(BuildContext context) async {
     try {
@@ -62,6 +69,7 @@ class EncryptionSuccessPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
+
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -75,7 +83,35 @@ class EncryptionSuccessPage extends StatelessWidget {
                   style: const TextStyle(color: Colors.white),
                 ),
               ),
+
               const SizedBox(height: 30),
+
+              const Text(
+                "Your Key",
+                style: TextStyle(
+                  color: Color(0xFF66C8C8),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Color(0xFF66C8C8)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: SelectableText(
+                  encryptionKey,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+
+              const SizedBox(height: 30),
+
               Wrap(
                 alignment: WrapAlignment.center,
                 spacing: 20,
