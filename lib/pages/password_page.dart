@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // ⭐ تمت الإضافة
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:login1/main_layout_normal.dart';
 import 'package:login1/pages/forgot_password_page.dart';
 
@@ -28,9 +28,13 @@ class _PasswordPageState extends State<PasswordPage> {
   bool? isNewUser;
   bool loading = true;
 
+  // ================================================
+  // ✅ إصلاح check-email — الآن يعمل 100% بشكل صحيح
+  // ================================================
   Future<void> _checkUserStatus() async {
     try {
       final url = Uri.parse('https://enigma-09np.onrender.com/auth/check-email');
+
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -38,13 +42,10 @@ class _PasswordPageState extends State<PasswordPage> {
       );
 
       if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
         setState(() {
-          isNewUser = false;
-          loading = false;
-        });
-      } else if (response.statusCode == 404) {
-        setState(() {
-          isNewUser = true;
+          isNewUser = !(data["exists"] ?? false);
           loading = false;
         });
       } else {
@@ -68,7 +69,12 @@ class _PasswordPageState extends State<PasswordPage> {
   }
 
   Future<void> _handleAuth(
-      BuildContext context, bool newUser, String email, String password, String? confirmPassword) async {
+      BuildContext context,
+      bool newUser,
+      String email,
+      String password,
+      String? confirmPassword,
+      ) async {
     try {
       final url = Uri.parse(
         newUser
@@ -85,9 +91,7 @@ class _PasswordPageState extends State<PasswordPage> {
         body["confirm_password"] = confirmPassword ?? "";
         body["name"] = nameController.text.trim();
         body["age"] = ageController.text.trim();
-
-        final phone = "0${phoneController.text.trim()}";
-        body["phone"] = phone;
+        body["phone"] = "0${phoneController.text.trim()}";
         body["gender"] = selectedGender;
       }
 
@@ -101,7 +105,6 @@ class _PasswordPageState extends State<PasswordPage> {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (data["token"] != null) {
-          // ⭐ توحيد حفظ التوكن في SecureStorage + SharedPreferences
           await storage.write(key: 'jwt', value: data["token"]);
 
           final prefs = await SharedPreferences.getInstance();
@@ -284,13 +287,11 @@ class _PasswordPageState extends State<PasswordPage> {
                   items: const [
                     DropdownMenuItem(
                       value: "Female",
-                      child:
-                      Text("Female", style: TextStyle(color: Colors.white)),
+                      child: Text("Female", style: TextStyle(color: Colors.white)),
                     ),
                     DropdownMenuItem(
                       value: "Male",
-                      child:
-                      Text("Male", style: TextStyle(color: Colors.white)),
+                      child: Text("Male", style: TextStyle(color: Colors.white)),
                     ),
                   ],
                   onChanged: (value) => setState(() => selectedGender = value!),
@@ -333,8 +334,7 @@ class _PasswordPageState extends State<PasswordPage> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                          builder: (context) => const ForgotPasswordPage()),
+                      MaterialPageRoute(builder: (context) => const ForgotPasswordPage()),
                     );
                   },
                   child: const Text(
@@ -352,7 +352,8 @@ class _PasswordPageState extends State<PasswordPage> {
                   final confirmPassword = confirmPasswordController.text.trim();
 
                   if (password.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    ScaffoldMessenger.of(context).
+                    showSnackBar(
                       const SnackBar(
                         content: Text(
                           'Please enter a password.',
@@ -410,7 +411,12 @@ class _PasswordPageState extends State<PasswordPage> {
                   }
 
                   await _handleAuth(
-                      context, newUser, widget.email, password, confirmPassword);
+                    context,
+                    newUser,
+                    widget.email,
+                    password,
+                    confirmPassword,
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2E2E2E),

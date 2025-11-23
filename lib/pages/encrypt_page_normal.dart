@@ -19,11 +19,13 @@ class _EncryptPageNormalState extends State<EncryptPageNormal> {
   final TextEditingController _textController = TextEditingController();
   bool isLoading = false;
 
+
   final List<String> encryptionTypes = [
     "AES-CBC",
     "ChaCha-Poly1305",
-    "Hybrid Encryption",
+    "Hybrid Encryption (Recommended)",
   ];
+
 
   // ---------------------------------------------------------
   // POPUP: WIFI PASSWORD

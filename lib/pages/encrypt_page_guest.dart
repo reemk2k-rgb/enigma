@@ -63,7 +63,7 @@ class _GuestPageState extends State<GuestPage> {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           "content": text,
-          "method": "AES-CBC" // 🔐 نختار AES للضيوف افتراضياً
+          "method": "AES-CBC"
         }),
       );
 
@@ -71,9 +71,9 @@ class _GuestPageState extends State<GuestPage> {
         final data = jsonDecode(response.body);
 
         if (data['success'] == true) {
-          final encrypted = data['encrypted'];   // ✔ الاسم الصحيح من الباك
-          final key = data['key_b64'];          // ✔ مفتاح التشفير
-          final algo = data['algorithm'];       // ✔ نوع الخوارزمية
+          final encrypted = data['encrypted'];
+          final key = data['key_b64'];
+          final algo = data['algorithm'];
 
           setState(() => attemptsLeft -= 1);
 
@@ -134,7 +134,7 @@ class _GuestPageState extends State<GuestPage> {
 
             TextField(
               controller: _textController,
-              maxLength: 500,
+              maxLength: 100, // ← ← ← التعديل الوحيد
               maxLines: 5,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(

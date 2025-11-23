@@ -173,7 +173,11 @@ class _ProfileDetailsPageState extends State<ProfileDetailsPage> {
 
             const SizedBox(height: 20),
             _buildLabel('Email address'),
-            _buildTextField(controller: _emailController, keyboardType: TextInputType.emailAddress),
+            _buildTextField(
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              readOnly: true, // ←⛔ يمنع تعديل الإيميل
+            ),
 
             const SizedBox(height: 20),
             _buildLabel('Age'),
@@ -211,13 +215,16 @@ class _ProfileDetailsPageState extends State<ProfileDetailsPage> {
     );
   }
 
+  // ⭐ هنا أضفنا readOnly
   Widget _buildTextField({
     required TextEditingController controller,
     TextInputType keyboardType = TextInputType.text,
+    bool readOnly = false,
   }) {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
+      readOnly: readOnly,
       style: const TextStyle(color: Colors.white),
       decoration: const InputDecoration(
         filled: true,

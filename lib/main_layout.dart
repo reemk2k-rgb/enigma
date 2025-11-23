@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 import 'pages/profile_page.dart';
 import 'pages/awareness_page.dart';
@@ -27,33 +26,13 @@ class _MainLayoutState extends State<MainLayout> {
   // ✅ رابط السيرفر الثابت (Render)
   final String baseUrl = "https://enigma-09np.onrender.com/";
 
-  // 🛰️ اختبار الاتصال بالسيرفر (backend)
+  // 🛰️ اختبار الاتصال بالسيرفر (backend) - بدون إظهار رسالة للمستخدم
   Future<void> testConnection() async {
     try {
-      final response = await http.get(Uri.parse("${baseUrl}ping"));
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              "✅ Connected to backend successfully!",
-              style: TextStyle(color: Color(0xFF66C8C8)),
-            ),
-            backgroundColor: Color(0xFF2E2E2E),
-          ),
-        );
-      } else {
-        throw Exception("Server responded with ${response.statusCode}");
-      }
+      await http.get(Uri.parse("${baseUrl}ping"));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            "❌ Connection failed: $e",
-            style: const TextStyle(color: Color(0xFF66C8C8)),
-          ),
-          backgroundColor: const Color(0xFF2E2E2E),
-        ),
-      );
+      // نطبع الخطأ في الكونسول فقط (وليس للمستخدم)
+      debugPrint("Backend connection error: $e");
     }
   }
 
@@ -88,7 +67,8 @@ class _MainLayoutState extends State<MainLayout> {
   @override
   void initState() {
     super.initState();
-    // 🔄 تلقائياً يختبر الاتصال عند فتح التطبيق
+
+    // 🔄 يختبر الاتصال في الخلفية فقط (بدون إشعار للمستخدم)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       testConnection();
     });

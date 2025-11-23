@@ -1,61 +1,8 @@
-import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:login1/constants.dart';
 
-class AwarenessInformationPage extends StatefulWidget {
+class AwarenessInformationPage extends StatelessWidget {
   const AwarenessInformationPage({super.key});
-
-  @override
-  State<AwarenessInformationPage> createState() =>
-      _AwarenessInformationPageState();
-}
-
-class _AwarenessInformationPageState extends State<AwarenessInformationPage> {
-  String? awarenessText;
-  bool isLoading = false;
-  String? errorMessage;
-
-  @override
-  void initState() {
-    super.initState();
-    fetchAwarenessData();
-  }
-
-  Future<void> fetchAwarenessData() async {
-    setState(() {
-      isLoading = true;
-      errorMessage = null;
-    });
-
-    try {
-      final url = Uri.parse('$baseUrl/awareness/info');
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['success'] == true) {
-          setState(() {
-            awarenessText = data['message'] ?? 'No awareness content found.';
-          });
-        } else {
-          setState(() {
-            errorMessage = data['error'] ?? 'Failed to load content.';
-          });
-        }
-      } else {
-        setState(() {
-          errorMessage = 'Server error (${response.statusCode}).';
-        });
-      }
-    } catch (e) {
-      setState(() {
-        errorMessage = 'Error while connecting to server: $e';
-      });
-    } finally {
-      setState(() => isLoading = false);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,35 +11,97 @@ class _AwarenessInformationPageState extends State<AwarenessInformationPage> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF2E2E2E),
         title: const Text(
-          "Awareness Information",
+          'Awareness Information',
           style: TextStyle(color: Color(0xFF66C8C8)),
         ),
-        centerTitle: true,
-        elevation: 0,
+        centerTitle: true, // يجعل العنوان في المنتصف
+        automaticallyImplyLeading: false, // ✅ يمنع ظهور زر الرجوع
       ),
-      body: Center(
-        child: isLoading
-            ? const CircularProgressIndicator(color: Color(0xFF66C8C8))
-            : errorMessage != null
-            ? Text(
-          errorMessage!,
-          style:
-          const TextStyle(color: Colors.redAccent, fontSize: 16),
-          textAlign: TextAlign.center,
-        )
-            : Padding(
-          padding: const EdgeInsets.all(20),
-          child: Text(
-            awarenessText ??
-                'This is the Awareness Information Page',
-            style: const TextStyle(
-              color: Color(0xFF66C8C8),
-              fontSize: 18,
-              height: 1.5,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSection(
+              icon: Icons.security,
+              title: 'Security Awareness',
+              content: '''
+- Do not share encryption keys or passwords with anyone.
+- Store encrypted files in a secure location.
+- Avoid using the app for illegal or harmful activities.
+''',
             ),
-            textAlign: TextAlign.center,
-          ),
+            _buildSection(
+              icon: Icons.privacy_tip,
+              title: 'Data Privacy',
+              content: '''
+- We do not request sensitive information unless necessary.
+- Do not enter financial data or passwords in non-secure fields.
+''',
+            ),
+            _buildSection(
+              icon: Icons.rule,
+              title: 'Usage Guidelines',
+              content: '''
+- ENIGMA is for personal and security purposes only.
+- Ensure that encrypted data does not violate any laws.
+''',
+            ),
+            _buildSection(
+              icon: Icons.warning,
+              title: 'Risks',
+              content: '''
+- Losing your key or password means you cannot decrypt your data.
+- We are not responsible for data loss due to misuse.
+''',
+            ),
+            _buildSection(
+              icon: Icons.check_circle,
+              title: 'Best Practices',
+              content: '''
+- Use strong passwords for your account.
+- Keep the app updated for the latest security features.
+''',
+            ),
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSection({required IconData icon, required String title, required String content}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: const Color(0xFF66C8C8), size: 28),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Color(0xFF66C8C8),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  content,
+                  style: const TextStyle(
+                    color: Color(0xFF66C8C8),
+                    fontSize: 16,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+// ✅ أضفنا الاستيراد لصفحة إدخال الكود
+import 'package:login1/pages/reset_code_page.dart';
+
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
 
@@ -44,19 +47,27 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Reset link sent! Please check your email.',
+              'Reset code sent! Please check your email.',
               style: TextStyle(color: Color(0xFF66C8C8)),
             ),
             backgroundColor: Color(0xFF2E2E2E),
           ),
         );
-        Navigator.pop(context);
+
+        // ✅ هنا التعديل بدل pop
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ResetCodePage(email: email),
+          ),
+        );
+
       } else {
         final data = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              data['error'] ?? 'Failed to send reset link.',
+              data['error'] ?? 'Failed to send reset code.',
               style: const TextStyle(color: Color(0xFF66C8C8)),
             ),
             backgroundColor: const Color(0xFF2E2E2E),
@@ -138,7 +149,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               child: _isLoading
                   ? const CircularProgressIndicator(color: Color(0xFF66C8C8))
                   : const Text(
-                "Send Reset Link",
+                "Send Reset Code",
                 style: TextStyle(
                   color: Color(0xFF66C8C8),
                   fontSize: 18,
