@@ -319,7 +319,7 @@ class _EncryptPageNormalState extends State<EncryptPageNormal> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF2E2E2E),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,19 +352,17 @@ class _EncryptPageNormalState extends State<EncryptPageNormal> {
 
                   TextField(
                     controller: _textController,
-                    maxLength: 2000,
-                    maxLines: 5,
+                    maxLines: null, // النص غير محدود
                     style: const TextStyle(color: Colors.white),
                     decoration: const InputDecoration(
                       hintText: "Write or paste your data here...",
                       hintStyle: TextStyle(color: Color(0xFF66C8C8)),
                       filled: true,
                       fillColor: Colors.black26,
-                      border:
-                      OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF66C8C8))),
-                      focusedBorder:
-                      OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF66C8C8))),
-                      counterStyle: TextStyle(color: Color(0xFF66C8C8)),
+                      border: OutlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFF66C8C8))),
+                      focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFF66C8C8))),
                     ),
                   ),
                 ],
@@ -387,8 +385,7 @@ class _EncryptPageNormalState extends State<EncryptPageNormal> {
               ),
               items: encryptionTypes
                   .map((t) => DropdownMenuItem(
-                  value: t,
-                  child: Text(t, style: const TextStyle(color: Colors.white))))
+                  value: t, child: Text(t, style: const TextStyle(color: Colors.white))))
                   .toList(),
               onChanged: (v) => setState(() => selectedEncryption = v),
             ),

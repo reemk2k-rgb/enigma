@@ -27,12 +27,19 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     final password = passwordController.text.trim();
     final confirm = confirmController.text.trim();
 
-    if (password.length < 6) {
+    // ==============================
+    // 🔐 نفس شروط PasswordPage بالضبط
+    // ==============================
+    final passwordRegex = RegExp(
+        r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$');
+
+    if (!passwordRegex.hasMatch(password)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           backgroundColor: Color(0xFF2E2E2E),
+          duration: Duration(seconds: 5),
           content: Text(
-            "Password too short",
+            "Password must contain:\n• At least 8 characters\n• Uppercase + lowercase\n• A number\n• A special symbol",
             style: TextStyle(color: Color(0xFF66C8C8)),
           ),
         ),
@@ -140,8 +147,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                 hintText: "New Password",
                 hintStyle: TextStyle(color: Color(0xFF66C8C8)),
                 filled: true,
-                fillColor: Colors.
-                black26,
+                fillColor: Colors.black26,
                 border: OutlineInputBorder(),
               ),
             ),
