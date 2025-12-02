@@ -39,7 +39,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
           backgroundColor: Color(0xFF2E2E2E),
           duration: Duration(seconds: 5),
           content: Text(
-            "Password must contain:\n• At least 8 characters\n• Uppercase + lowercase\n• A number\n• A special symbol",
+            "Password must contain:\n• At least 8 characters\n• Uppercase + lowercase\n• A number\n• A special symbol @  \$  !  %  *  ?  &",
             style: TextStyle(color: Color(0xFF66C8C8)),
           ),
         ),

@@ -382,7 +382,7 @@ class _PasswordPageState extends State<PasswordPage> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
-                          'Password must contain:\n• At least 8 characters\n• Uppercase and lowercase letters\n• A number\n• A special symbol',
+                          'Password must contain:\n• At least 8 characters\n• Uppercase and lowercase letters\n• A number\n• A special symbol @  \$  !  %  *  ?  &',
                           style: TextStyle(color: Color(0xFF66C8C8)),
                         ),
                         backgroundColor: Color(0xFF2E2E2E),

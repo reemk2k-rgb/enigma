@@ -131,6 +131,22 @@ class DecryptionSuccessPage extends StatelessWidget {
 
                 const SizedBox(height: 30),
 
+                // 🔴 رسالة الخطأ إذا الناتج فاضي
+                if ((decryptedText == null || decryptedText!.trim().isEmpty) &&
+                    (filePath == null || filePath!.trim().isEmpty))
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: Text(
+                      "If output is empty. Check that the key and input are correct",
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.redAccent,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
                 Wrap(
                   alignment: WrapAlignment.center,
                   spacing: 20,
@@ -147,8 +163,7 @@ class DecryptionSuccessPage extends StatelessWidget {
                     ),
                     ElevatedButton.icon(
                       onPressed: () => _downloadFile(context),
-                      icon:
-                      const Icon(Icons.download, color: Color(0xFF66C8C8)),
+                      icon: const Icon(Icons.download, color: Color(0xFF66C8C8)),
                       label: const Text("Download"),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF2E2E2E),
