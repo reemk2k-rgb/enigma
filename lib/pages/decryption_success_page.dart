@@ -17,7 +17,6 @@ class DecryptionSuccessPage extends StatelessWidget {
   Future<void> _downloadFile(BuildContext context) async {
     try {
       if (decryptedText != null) {
-        // حفظ النص في ملف
         final directory = await getApplicationDocumentsDirectory();
         final file = File("${directory.path}/decrypted_text.txt");
         await file.writeAsString(decryptedText!);
@@ -26,7 +25,6 @@ class DecryptionSuccessPage extends StatelessWidget {
           SnackBar(content: Text("File saved at: ${file.path}")),
         );
       } else if (filePath != null) {
-        // نسخ ملف PDF إلى مجلد التطبيق
         final original = File(filePath!);
         final directory = await getApplicationDocumentsDirectory();
         final newFile = File("${directory.path}/decrypted_file.pdf");
@@ -93,6 +91,9 @@ class DecryptionSuccessPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 30),
 
+                // ---------------------------------------------------------
+                //                🔹 مربع عرض النص + أيقونة النسخ
+                // ---------------------------------------------------------
                 if (decryptedText != null)
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -100,13 +101,26 @@ class DecryptionSuccessPage extends StatelessWidget {
                       border: Border.all(color: Color(0xFF66C8C8)),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: SelectableText(
-                      decryptedText!,
-                      style: const TextStyle(color: Colors.white),
-                      textAlign: TextAlign.center,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: SelectableText(
+                            decryptedText!,
+                            style: const TextStyle(color: Colors.white),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => _copyToClipboard(context),
+                          icon: const Icon(Icons.copy,
+                              color: Color(0xFF66C8C8)),
+                        ),
+                      ],
                     ),
                   ),
 
+                // PDF Info
                 if (filePath != null)
                   Column(
                     children: [
@@ -126,12 +140,16 @@ class DecryptionSuccessPage extends StatelessWidget {
                         ),
                         textAlign: TextAlign.center,
                       ),
+                      const SizedBox(height: 10),
+                      IconButton(
+                        onPressed: () => _copyToClipboard(context),
+                        icon: const Icon(Icons.copy, color: Color(0xFF66C8C8)),
+                      ),
                     ],
                   ),
 
                 const SizedBox(height: 30),
 
-                // 🔴 رسالة الخطأ إذا الناتج فاضي
                 if ((decryptedText == null || decryptedText!.trim().isEmpty) &&
                     (filePath == null || filePath!.trim().isEmpty))
                   Padding(
@@ -147,10 +165,11 @@ class DecryptionSuccessPage extends StatelessWidget {
                     ),
                   ),
 
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 20,
-                  runSpacing: 10,
+                // ---------------------------------------------------------
+                //           🔹 زر المشاركة + زر التنزيل جنب بعض
+                // ---------------------------------------------------------
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     ElevatedButton.icon(
                       onPressed: _shareContent,
@@ -161,19 +180,12 @@ class DecryptionSuccessPage extends StatelessWidget {
                         side: const BorderSide(color: Color(0xFF66C8C8)),
                       ),
                     ),
+                    const SizedBox(width: 20),
                     ElevatedButton.icon(
                       onPressed: () => _downloadFile(context),
-                      icon: const Icon(Icons.download, color: Color(0xFF66C8C8)),
+                      icon:
+                      const Icon(Icons.download, color: Color(0xFF66C8C8)),
                       label: const Text("Download"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2E2E2E),
-                        side: const BorderSide(color: Color(0xFF66C8C8)),
-                      ),
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: () => _copyToClipboard(context),
-                      icon: const Icon(Icons.copy, color: Color(0xFF66C8C8)),
-                      label: const Text("Copy"),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF2E2E2E),
                         side: const BorderSide(color: Color(0xFF66C8C8)),

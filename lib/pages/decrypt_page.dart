@@ -22,7 +22,8 @@ class _DecryptPageState extends State<DecryptPage> {
 
   bool isLoading = false;
 
-  // ---------------- WIFI ---------------- //
+  // ---------------- OPTIONS POPUPS ---------------- //
+
   void _openWifiPopup() {
     final passController = TextEditingController();
 
@@ -78,7 +79,6 @@ class _DecryptPageState extends State<DecryptPage> {
     );
   }
 
-  // ---------------- URL ---------------- //
   void _openUrlPopup() {
     final urlController = TextEditingController();
 
@@ -134,7 +134,6 @@ class _DecryptPageState extends State<DecryptPage> {
     );
   }
 
-  // ---------------- FILE ---------------- //
   void _pickEncryptedFile() async {
     final result = await FilePicker.platform.pickFiles(withData: true);
 
@@ -149,7 +148,6 @@ class _DecryptPageState extends State<DecryptPage> {
     }
   }
 
-  // ---------------- OPTIONS LIST ---------------- //
   void _showOptions() {
     showModalBottomSheet(
       context: context,
@@ -200,16 +198,18 @@ class _DecryptPageState extends State<DecryptPage> {
     );
   }
 
-  // ---------------- SAVE PDF ---------------- //
-  Future<File> _savePdfFromBase64(String b64) async {
+  // ---------------- FILE SAVE ---------------- //
+
+  Future<File> _saveFileFromBase64(String b64, String fileName) async {
     final bytes = base64Decode(b64);
     final dir = await getApplicationDocumentsDirectory();
-    final file = File("${dir.path}/decrypted_file.pdf");
+    final file = File("${dir.path}/$fileName");
     await file.writeAsBytes(bytes);
     return file;
   }
 
-  // ---------------- DECRYPT ACTION ---------------- //
+  // ---------------- DECRYPT ---------------- //
+
   Future<void> _decryptAction() async {
     if (textController.text.isEmpty || keyController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -241,36 +241,53 @@ class _DecryptPageState extends State<DecryptPage> {
       final data = jsonDecode(response.body);
 
       final decrypted = data["decrypted"];
-      final dataType = data["data_type"] ?? "text";
 
-      if (dataType == "file") {
-        final file = await _savePdfFromBase64(decrypted);
-        Navigator.push(
-          context,
-          MaterialPageRoute(
+      // ---------------- FILE DETECTION ---------------- //
+
+      try {
+        final obj = jsonDecode(decrypted);
+
+        if (obj is Map && obj.containsKey("base64")) {
+          final fileName = (obj["filename"] as String?) ?? "decrypted_file";
+          final b64 = obj["base64"] as String;
+
+          final file = await _saveFileFromBase64(b64, fileName);
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
               builder: (context) => DecryptionSuccessPage(
-                  filePath: file.path, decryptedText: null)),
-        );
-        return;
-      }
+                filePath: file.path,
+                decryptedText: null,
+              ),
+            ),
+          );
+          return;
+        }
+      } catch (_) {}
 
-      if (dataType == "wifi") {
-        Map wifi = jsonDecode(decrypted);
-        String pass = wifi["password"] ?? "";
-        Navigator.push(
-          context,
-          MaterialPageRoute(
+      // ---------------- WIFI ---------------- //
+      try {
+        final obj = jsonDecode(decrypted);
+        if (obj is Map && obj.containsKey("password")) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
               builder: (context) =>
-                  DecryptionSuccessPage(decryptedText: pass)),
-        );
-        return;
-      }
+                  DecryptionSuccessPage(decryptedText: obj["password"]),
+            ),
+          );
+          return;
+        }
+      } catch (_) {}
 
+      // ---------------- TEXT ---------------- //
       Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) =>
-                DecryptionSuccessPage(decryptedText: decrypted)),
+          builder: (context) =>
+              DecryptionSuccessPage(decryptedText: decrypted),
+        ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -283,12 +300,11 @@ class _DecryptPageState extends State<DecryptPage> {
   }
 
   // ---------------- UI ---------------- //
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF2E2E2E),
-
-      /// 🔥🔥🔥 التعديل هنا → أضفت Scroll للشاشة كاملة
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
         child: Column(
@@ -319,7 +335,6 @@ class _DecryptPageState extends State<DecryptPage> {
                   ),
                   const SizedBox(height: 10),
 
-                  /// 🔥🔥🔥 التعديل هنا → خليت النص غير محدود
                   TextField(
                     controller: textController,
                     maxLines: null,
@@ -338,7 +353,6 @@ class _DecryptPageState extends State<DecryptPage> {
 
             const SizedBox(height: 20),
 
-            // KEY
             const Text("Key",
                 style: TextStyle(
                     color: Color(0xFF66C8C8),

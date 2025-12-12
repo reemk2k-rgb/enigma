@@ -19,13 +19,11 @@ class _EncryptPageNormalState extends State<EncryptPageNormal> {
   final TextEditingController _textController = TextEditingController();
   bool isLoading = false;
 
-
   final List<String> encryptionTypes = [
     "AES-CBC",
     "ChaCha-Poly1305",
     "Hybrid Encryption (Recommended)",
   ];
-
 
   // ---------------------------------------------------------
   // POPUP: WIFI PASSWORD
@@ -123,6 +121,7 @@ class _EncryptPageNormalState extends State<EncryptPageNormal> {
               TextField(
                 controller: urlController,
                 style: const TextStyle(color: Colors.white),
+
                 decoration: const InputDecoration(
                   labelText: "Enter URL",
                   labelStyle: TextStyle(color: Color(0xFF66C8C8)),
@@ -352,7 +351,7 @@ class _EncryptPageNormalState extends State<EncryptPageNormal> {
 
                   TextField(
                     controller: _textController,
-                    maxLines: null, // النص غير محدود
+                    maxLines: null,
                     style: const TextStyle(color: Colors.white),
                     decoration: const InputDecoration(
                       hintText: "Write or paste your data here...",

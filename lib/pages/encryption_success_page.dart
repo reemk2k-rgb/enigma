@@ -16,26 +16,53 @@ class EncryptionSuccessPage extends StatelessWidget {
     required this.algorithm,
   });
 
-  Future<void> _downloadText(BuildContext context) async {
+  // ---------------------- CONTENT DOWNLOAD ----------------------
+  Future<void> _downloadContent(BuildContext context) async {
     try {
       final directory = await getApplicationDocumentsDirectory();
-      final file = File("${directory.path}/encrypted_text.txt");
+      final file = File("${directory.path}/encrypted_content.txt");
       await file.writeAsString(encryptedText);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("File saved at: ${file.path}")),
+        SnackBar(content: Text("Content saved at: ${file.path}")),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to save file")),
+        const SnackBar(content: Text("Failed to save content")),
       );
     }
   }
 
-  Future<void> _copyToClipboard(BuildContext context) async {
+  // ---------------------- KEY DOWNLOAD ----------------------
+  Future<void> _downloadKey(BuildContext context) async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File("${directory.path}/encryption_key.txt");
+      await file.writeAsString(encryptionKey);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Key saved at: ${file.path}")),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to save key")),
+      );
+    }
+  }
+
+  // ---------------------- COPY CONTENT ----------------------
+  Future<void> _copyContent(BuildContext context) async {
     await Clipboard.setData(ClipboardData(text: encryptedText));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Copied to Clipboard")),
+      const SnackBar(content: Text("Content copied")),
+    );
+  }
+
+  // ---------------------- COPY KEY ----------------------
+  Future<void> _copyKey(BuildContext context) async {
+    await Clipboard.setData(ClipboardData(text: encryptionKey));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Key copied")),
     );
   }
 
@@ -59,6 +86,7 @@ class EncryptionSuccessPage extends StatelessWidget {
             children: [
               const Icon(Icons.check_circle, color: Color(0xFF66C8C8), size: 80),
               const SizedBox(height: 20),
+
               const Text(
                 "Encryption Successful!",
                 textAlign: TextAlign.center,
@@ -68,23 +96,61 @@ class EncryptionSuccessPage extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+
               const SizedBox(height: 20),
 
+              // ---------------------- CONTENT BOX + COPY ICON ----------------------
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
                   border: Border.all(color: Color(0xFF66C8C8)),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: SelectableText(
-                  encryptedText,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: SelectableText(
+                        encryptedText,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.copy, color: Color(0xFF66C8C8)),
+                      onPressed: () => _copyContent(context),
+                    ),
+                  ],
                 ),
               ),
 
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
+
+              // ---------------------- SHARE + DOWNLOAD CONTENT ----------------------
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => Share.share(encryptedText),
+                      icon: const Icon(Icons.share, color: Color(0xFF66C8C8)),
+                      label: const Text("Share Content"),
+                      style: _btn,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _downloadContent(context),
+                      icon: const Icon(Icons.download, color: Color(0xFF66C8C8)),
+                      label: const Text("Download"),
+                      style: _btn,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 35),
 
               const Text(
                 "Your Key",
@@ -94,54 +160,54 @@ class EncryptionSuccessPage extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 8),
 
+              const SizedBox(height: 10),
+
+              // ---------------------- KEY BOX + COPY ICON ----------------------
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
                   border: Border.all(color: Color(0xFF66C8C8)),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: SelectableText(
-                  encryptionKey,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: SelectableText(
+                        encryptionKey,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.copy, color: Color(0xFF66C8C8)),
+                      onPressed: () => _copyKey(context),
+                    ),
+                  ],
                 ),
               ),
 
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
 
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 20,
-                runSpacing: 10,
+              // ---------------------- SHARE + DOWNLOAD KEY ----------------------
+              Row(
                 children: [
-                  ElevatedButton.icon(
-                    onPressed: () => Share.share(encryptedText),
-                    icon: const Icon(Icons.share, color: Color(0xFF66C8C8)),
-                    label: const Text("Share"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2E2E2E),
-                      side: const BorderSide(color: Color(0xFF66C8C8)),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => Share.share(encryptionKey),
+                      icon: const Icon(Icons.share, color: Color(0xFF66C8C8)),
+                      label: const Text("Share Key"),
+                      style: _btn,
                     ),
                   ),
-                  ElevatedButton.icon(
-                    onPressed: () => _downloadText(context),
-                    icon: const Icon(Icons.download, color: Color(0xFF66C8C8)),
-                    label: const Text("Download"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2E2E2E),
-                      side: const BorderSide(color: Color(0xFF66C8C8)),
-                    ),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: () => _copyToClipboard(context),
-                    icon: const Icon(Icons.copy, color: Color(0xFF66C8C8)),
-                    label: const Text("Copy"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2E2E2E),
-                      side: const BorderSide(color: Color(0xFF66C8C8)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _downloadKey(context),
+                      icon: const Icon(Icons.download, color: Color(0xFF66C8C8)),
+                      label: const Text("Download"),
+                      style: _btn,
                     ),
                   ),
                 ],
@@ -152,4 +218,9 @@ class EncryptionSuccessPage extends StatelessWidget {
       ),
     );
   }
+
+  ButtonStyle get _btn => ElevatedButton.styleFrom(
+    backgroundColor: const Color(0xFF2E2E2E),
+    side: const BorderSide(color: Color(0xFF66C8C8)),
+  );
 }
